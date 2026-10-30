@@ -1,0 +1,2 @@
+/** Compile-only pinned upstream API; never packaged. */
+package com.stremio.tv.views.settings.composables; public final class SectionItemKt { public static void SectionItem(String title, kotlin.jvm.functions.Function2<androidx.compose.runtime.Composer,Integer,kotlin.Unit> label, kotlin.jvm.functions.Function2<androidx.compose.runtime.Composer,Integer,kotlin.Unit> body, androidx.compose.runtime.Composer c,int flags,int defaults) {} }
