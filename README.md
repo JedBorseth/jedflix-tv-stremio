@@ -11,8 +11,8 @@ Jedflix is not affiliated with Stremio.
 ## Features
 
 - **Stremio under the hood.** Rebranded launcher, splash, wordmark, and a black/red
-  theme. Stremio account, service URLs, addon compatibility, and native libraries
-  remain upstream.
+  theme. Stremio account, service URLs, addon compatibility, decoders, and video
+  acceleration remain upstream.
 - **Real-Debrid built in.** A dedicated Settings → Real-Debrid screen drives the
   managed Comet source. Pair from your phone by QR code or paste a key; keys are
   validated with Real-Debrid and stored encrypted on the device. Set resolution,
@@ -30,9 +30,18 @@ Jedflix is not affiliated with Stremio.
 
 ### Audio normalization and dialogue boost
 
-Designed, not shipped. The research, tradeoffs, and implementation plan are in
-[docs/audio-processing.md](docs/audio-processing.md). Nothing in the current APK
-changes audio, and the bundled FFmpeg build has filters disabled.
+The player Audio menu includes **Night mode**, an optional FFmpeg compressor and
+peak limiter that raises quiet passages and reduces loud scenes. It defaults to
+Off, remembers your choice, and switches playback to the existing mpv engine
+when enabled. It uses decoded PCM, temporarily disabling compressed passthrough.
+This is dynamic range compression; it does not isolate speech from a mixed
+soundtrack or pre-scan movies for loudness matching.
+
+The build replaces only `libavfilter.so` with a compatible FFmpeg 8.1 build.
+The first build downloads the pinned Android NDK r28c (about 1 GB); later builds
+reuse checked outputs. See [Night mode](docs/audio-night-mode.md) for controls
+and verification, and [native build details](docs/audio-native-build.md) for the
+source, toolchain, and ABI checks.
 
 ## Screenshots
 
@@ -44,7 +53,7 @@ changes audio, and the bundled FFmpeg build has filters disabled.
 
 ## Build
 
-Requires Java, Python 3, curl, and Android SDK Build Tools 36.0.0. The default SDK
+Requires Java, Python 3.12+, make, curl, and Android SDK Build Tools 36.0.0. The default SDK
 location is `~/Library/Android/sdk`; override `ANDROID_HOME` or `BUILD_TOOLS` if
 needed.
 

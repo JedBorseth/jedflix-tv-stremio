@@ -10,9 +10,23 @@ import json
 import hashlib
 import urllib.request
 import re
+import atexit
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
+if os.environ.get("JEDFLIX_BUILD_LOCK_HELD") != "1":
+    build_lock = Path(".local/apk-build.lock")
+    build_lock.parent.mkdir(exist_ok=True)
+    for attempt in range(301):
+        try:
+            build_lock.mkdir()
+            atexit.register(build_lock.rmdir)
+            break
+        except FileExistsError:
+            if attempt == 300:
+                raise SystemExit("Another build has held .local/apk-build.lock for 10 minutes; check whether it is still running")
+            time.sleep(2)
 parser = argparse.ArgumentParser()
 parser.add_argument("--lock-addons", action="store_true", help="Remove user addon management and reject mutations")
 parser.add_argument("--fresh-test", action="store_true", help="Build an isolated package for fresh-install verification")
@@ -53,6 +67,17 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         run("python3", "scripts/addon-lock-patch.py", stage)
         run("python3", "scripts/comet-settings-patch.py", stage)
         run("python3", "scripts/update-patch.py", stage)
+        # Keep upstream decoders and mpv intact. Build just the ABI-compatible
+        # audio filter library, then add the in-player Night mode control.
+        abis = [p.name for p in (stage / "lib").iterdir() if p.is_dir()]
+        assert len(abis) == 1, f"Expected a single-ABI build: {abis}"
+        abi = abis[0]
+        run("python3", "scripts/build-audio-filters.py", "--abi", abi)
+        audio_native = Path(".local/audio-filters") / abi
+        shutil.copyfile(audio_native / "libavfilter.so", stage / "lib" / abi / "libavfilter.so")
+        for notice in ["ffmpeg-audio-NOTICE.txt", "ffmpeg-audio-COPYING.GPLv3"]:
+            shutil.copyfile(Path("assets") / notice, stage / "assets" / notice)
+        run("python3", "scripts/audio-patch.py", stage)
         update_config = json.loads(Path("assets/update-config.json").read_text())
         version_name = os.environ.get("JEDFLIX_VERSION_NAME", update_config["versionName"])
         version_code = int(os.environ.get("JEDFLIX_VERSION_CODE", update_config["versionCode"]))
@@ -92,7 +117,7 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             "scripts/android/RdAccountClient.java",
             "scripts/android/CometRestartActivity.java", "scripts/android/UpdateClient.java",
             "scripts/android/JedflixUpdates.java",
-            "scripts/android/AboutSettings.java", generated, build_config)
+            "scripts/android/AboutSettings.java", "scripts/android/NightAudio.java", generated, build_config)
         run(BUILD_TOOLS / "d8", "--lib", android, "--min-api", "26", "--output", dex, *classes.rglob("*.class"), qr_library)
         shutil.copyfile(dex / "classes.dex", stage / "classes10.dex")
         if args.fresh_test:

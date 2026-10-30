@@ -4,6 +4,22 @@ cd "$(dirname "$0")/.."
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 BUILD_TOOLS="${BUILD_TOOLS:-$ANDROID_HOME/build-tools/36.0.0}"
 mkdir -p .local/tools .local/upstream dist
+# Decoding and signing use shared paths. Direct builds and dev builds must not
+# overwrite each other's staging trees when several threads share this checkout.
+if [[ "${JEDFLIX_BUILD_LOCK_HELD:-0}" != 1 ]]; then
+  BUILD_LOCK=".local/apk-build.lock"
+  waited=0
+  while ! mkdir "$BUILD_LOCK" 2>/dev/null; do
+    if [[ "$waited" -ge 600 ]]; then
+      echo "another build has held $BUILD_LOCK for 10 minutes; check whether it is still running" >&2
+      exit 1
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  trap 'rmdir "$BUILD_LOCK" 2>/dev/null || true' EXIT
+  export JEDFLIX_BUILD_LOCK_HELD=1
+fi
 ARCH="${1:-${ARCH:-arm64}}"
 case "$ARCH" in
   arm64|arm64-v8a) LABEL=arm64; ABI=arm64-v8a; BUILD_ID=33145732; SHA=caaf4faba423a47c3174eda08b94057956ce32af616c6377b3485f4f5dec993c ;;

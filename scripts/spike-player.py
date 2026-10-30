@@ -11,7 +11,8 @@ from urllib.parse import quote
 import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
-ADB = str(Path(os.environ.get("ANDROID_HOME", str(Path.home() / "Library/Android/sdk"))) / "platform-tools/adb")
+ADB = str(ROOT / "scripts/adb.sh")
+SERIAL = os.environ.get("JEDFLIX_SERIAL", "emulator-5554")
 
 class ClipHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -24,7 +25,7 @@ class ClipHandler(BaseHTTPRequestHandler):
         if self.path != "/test.mp4":
             self.send_error(404)
             return
-        path = ROOT / ".local/spike-media/test.mp4"
+        path = self.server.clip_path
         size = path.stat().st_size
         start, end = 0, size - 1
         partial = self.headers.get("Range")
@@ -62,11 +63,16 @@ class ClipHandler(BaseHTTPRequestHandler):
 parser = argparse.ArgumentParser()
 parser.add_argument("mode", choices=["serve", "play"])
 parser.add_argument("--url", default="http://127.0.0.1:8765/test.mp4")
+parser.add_argument("--bind", default="127.0.0.1", help="HTTP listen address; use the LAN address for the Windows emulator")
+parser.add_argument("--port", type=int, default=8765)
+parser.add_argument("--file", type=Path, default=ROOT / ".local/spike-media/test.mp4")
 args = parser.parse_args()
 if args.mode == "serve":
-    ThreadingHTTPServer(("127.0.0.1", 8765), ClipHandler).serve_forever()
+    server = ThreadingHTTPServer((args.bind, args.port), ClipHandler)
+    server.clip_path = args.file
+    server.serve_forever()
 else:
     stream = {"url": args.url, "name": "Jedflix feasibility test", "title": "Generated test clip"}
     data = base64.b64encode(zlib.compress(json.dumps(stream).encode())).decode()
     link = "stremio:///player/" + quote(data, safe="")
-    subprocess.run([ADB, "shell", "am", "start", "-W", "-a", "android.intent.action.VIEW", "-d", link, "-n", "com.stremio.one/com.stremio.tv.MainActivity"], check=True)
+    subprocess.run([ADB, "-s", SERIAL, "shell", "am", "start", "-W", "-a", "android.intent.action.VIEW", "-d", link, "-n", "com.stremio.one/com.stremio.tv.MainActivity"], check=True)

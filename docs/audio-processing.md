@@ -2,6 +2,10 @@
 
 Research and local APK inspection, 2026-10-30. No application behavior was changed.
 
+This is the preimplementation research report. The current build implements
+[FFmpeg Night mode](audio-night-mode.md); references below to disabled filters
+describe the original upstream APK.
+
 ## Recommendation
 
 Add an optional **Night mode** that compresses loud passages, restores useful listening level with makeup gain, and limits peaks. Treat dialogue enhancement and matching average volume between different titles as separate controls. For this APK, evaluate the existing mpv engine first; use its in-process PCM audio path rather than a separate FFmpeg command or a transcoding server. This is an engineering recommendation, not a tested implementation.

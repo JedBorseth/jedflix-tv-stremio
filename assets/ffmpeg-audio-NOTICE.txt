@@ -1,0 +1,28 @@
+FFmpeg audio filters for Jedflix
+
+This application includes a replacement libavfilter.so compiled from unmodified
+FFmpeg 8.1 source, with audio filters enabled for the player's Night audio mode.
+Copyright (c) the FFmpeg developers and individual source-file copyright holders.
+
+License: GNU General Public License version 3 or later (GPL-3.0-or-later).
+License text: https://www.gnu.org/licenses/gpl-3.0.html
+FFmpeg project: https://ffmpeg.org/
+
+Exact corresponding FFmpeg source:
+https://ffmpeg.org/releases/ffmpeg-8.1.tar.xz
+SHA-256: b072aed6871998cce9b36e7774033105ca29e33632be5b6347f3206898e0756a
+
+Build recipe in the Jedflix project: scripts/build-audio-filters.py
+Build instructions and dependency/toolchain pins: docs/audio-native-build.md
+Build commands:
+  python3 scripts/build-audio-filters.py --abi x86_64
+  python3 scripts/build-audio-filters.py --abi arm64-v8a
+
+The build uses Android NDK r28c, Android API 23, shared libraries, GPL/version3,
+and a 16 KB ELF page alignment. No FFmpeg source files are modified. The enabled
+optional filters are acompressor, alimiter, volume, aformat, aresample, pan, anull.
+The existing application's original avutil/swresample dependencies are retained.
+
+Distributors must provide this notice, the GPL license text, the corresponding
+FFmpeg source, and the build recipe/configuration with the distributed build in
+accordance with the GPL. This notice supplements existing third-party notices.
