@@ -1,11 +1,13 @@
 # Jedflix updates and legacy migration
 
 Settings → About identifies the app as a Jedflix fork of Stremio, shows the
-installed Jedflix version, credits Stremio, and offers manual update checks and
-the updater. The first MainActivity resume checks GitHub after eight seconds,
-at most once per process and once per day after a successful check. A newer
-release offers View update / Later. Dismissal applies to that version code;
-manual checks always remain available.
+installed Jedflix version, credits Stremio, and has one **Software update** row.
+Its button changes with the state: Check for updates → Download X → Install X,
+and Cancel download while a download runs. There is no separate updater screen.
+The first MainActivity resume checks GitHub after eight seconds, at most once
+per process and once per day after a successful check. A newer release offers
+Update now / Later. Dismissal applies to that version code; the About row always
+remains available.
 
 ## Release contract
 
@@ -69,17 +71,18 @@ private cache, and a `.part` file. A download becomes usable only after checking
 its exact size, SHA-256, APK identity, version and signing certificates. Cached
 files are checked again before reuse; equal file size alone is insufficient.
 
-Android must grant Jedflix permission to install unknown apps. Returning after
-granting permission continues with the verified download; denying permission or
-cancelling the installer leaves it available to retry. Closing the updater
-cancels an active download and removes its partial file. The standard Android
-installer owns the final confirmation, using a read-only FileProvider URI scoped
-to `cache/updates/`. No install-session callbacks or alternate launcher activity
-are registered. After replacement, open Jedflix from the normal TV launcher.
+Android must grant Jedflix permission to install unknown apps. The Install action
+opens that permission screen when needed; returning to Jedflix continues with
+the verified download. Denying permission or cancelling the installer leaves the
+download ready, and the same row retries. Cancel download removes the partial
+file. The standard Android installer owns the final confirmation, using a
+read-only FileProvider URI scoped to `cache/updates/`. Jedflix opens it with the
+application context, so no updater activity or install-session callbacks exist.
+After replacement, open Jedflix from the normal TV launcher.
 
 The verified release metadata is saved before opening Android Settings. If an
-install-permission change kills the app, reopening Manage updates restores and
-revalidates the cached APK without downloading it again.
+install-permission change kills the app, the next start restores and revalidates
+the cached APK without downloading it again.
 
 Failures are shown distinctly from a successful check with no newer published
 release. Failed checks do not advance the daily-check timestamp. Updates never
@@ -104,7 +107,8 @@ The separately installed test APK supplies deterministic GitHub responses to
 the same downloader and validates actual signed APKs. It tests architecture,
 versioning, rate limits, absent metadata, unsafe redirects, checksum corruption,
 truncation, cancellation, cache reuse, wrong certificates, and provider scope.
-The install phase opens the real updater activity and standard Android installer.
+The install phase requests the same install path as Settings → About → Install
+and opens the standard Android installer.
 The after phase verifies private preferences and encrypted Comet settings survive.
 No test transport, fixture URLs or probe classes are packaged in Jedflix.
 

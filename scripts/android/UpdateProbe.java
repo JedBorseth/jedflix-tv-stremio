@@ -55,11 +55,12 @@ public final class UpdateProbe extends Instrumentation {
                     report.putString("result","PASS: verified update persisted; open Settings → About → Manage updates");
                     finish(Activity.RESULT_OK,report); return;
                 }
-                Activity activity=startActivitySync(new Intent(target,UpdateActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                report.putString("ready","Real updater activity is ready for permission and install tests"); sendStatus(1,report);
+                // Same path as Settings → About → Install: permission first if needed, then Android's installer.
+                runOnMainSync(()->JedflixUpdates.get(target).updateNow());
+                report.putString("ready","Installer requested through the Settings update action"); sendStatus(1,report);
                 // Installing the new APK terminates this instrumentation process.
                 long deadline=SystemClock.elapsedRealtime()+240000;
-                while (SystemClock.elapsedRealtime()<deadline && !activity.isDestroyed()) Thread.sleep(250);
+                while (SystemClock.elapsedRealtime()<deadline) Thread.sleep(250);
                 throw new AssertionError("Install flow ended without a package replacement");
             }
             UpdateClient client=new UpdateClient();

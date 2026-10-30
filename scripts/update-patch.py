@@ -28,8 +28,6 @@ tree = ET.parse(path)
 root = tree.getroot()
 ET.SubElement(root, 'uses-permission', {A+'name': 'android.permission.REQUEST_INSTALL_PACKAGES'})
 app = root.find('application')
-ET.SubElement(app, 'activity', {A+'name': 'com.jedflix.tv.UpdateActivity', A+'exported': 'false',
-    A+'theme': '@android:style/Theme.Material.NoActionBar', A+'label': 'Jedflix updates'})
 provider = ET.SubElement(app, 'provider', {A+'name': 'androidx.core.content.FileProvider',
     A+'authorities': root.get('package')+'.updates', A+'exported': 'false', A+'grantUriPermissions': 'true'})
 ET.SubElement(provider, 'meta-data', {A+'name': 'android.support.FILE_PROVIDER_PATHS', A+'resource': '@xml/jedflix_update_paths'})

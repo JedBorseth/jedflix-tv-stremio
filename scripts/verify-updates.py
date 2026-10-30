@@ -38,8 +38,7 @@ stubs = work / 'stubs/com/jedflix/tv'
     f'public static final String VERSION_NAME="{config["versionName"]}", REPOSITORY="{config["repository"]}"; }}')
 (stubs / 'JedflixUpdates.java').write_text('package com.jedflix.tv; public class JedflixUpdates {'
     'public boolean busy; public UpdateClient.Release release; public java.io.File apk; public String status;'
-    'public static JedflixUpdates get(android.content.Context c) { return null; } public void cancel() {} public void rememberReady() {} public boolean restoreReady() { return false; } }')
-(stubs / 'UpdateActivity.java').write_text('package com.jedflix.tv; public class UpdateActivity extends android.app.Activity {}')
+    'public static JedflixUpdates get(android.content.Context c) { return null; } public void cancel() {} public void updateNow() {} public void rememberReady() {} public boolean restoreReady() { return false; } }')
 run('javac', '--release', '8', '-classpath', android, '-d', work / 'api',
     *stubs.glob('*.java'), 'scripts/android/UpdateClient.java', 'scripts/android/stubs/androidx/core/content/FileProvider.java')
 run('javac', '--release', '8', '-classpath', os.pathsep.join(map(str, [android, work / 'api'])),

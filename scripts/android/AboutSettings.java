@@ -42,9 +42,8 @@ public final class AboutSettings {
                 SectionItemKt.SectionItem("A Jedflix fork of Stremio for Android TV",null,empty,c,0,2);
                 SectionItemKt.SectionItem("Based on Stremio Android TV 1.10.4. Stremio and its contributors provide the underlying player and addon platform.",null,empty,c,0,2);
                 SectionItemKt.SectionItem(updates.status,null,empty,c,0,2);
-                ButtonRowKt.ButtonRow("App updates","Manage updates",null,()->{ JedflixUpdates.open(context); return Unit.INSTANCE; },c,0,4);
-                ButtonRowKt.ButtonRow("Latest release",updates.busy ? "Checking…" : "Check for updates",null,
-                    ()->{ updates.check(null); return Unit.INSTANCE; },c,0,4);
+                ButtonRowKt.ButtonRow("Software update",updates.actionLabel(),null,
+                    ()->{ updates.action(); return Unit.INSTANCE; },c,0,4);
                 SectionItemKt.SectionItem("github.com/"+JedflixBuild.REPOSITORY,null,empty,c,0,2);
                 return Unit.INSTANCE;
             });

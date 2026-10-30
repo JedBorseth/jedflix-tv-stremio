@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             "scripts/android/RdKeyPairing.java", "scripts/android/RdKeyPairingDialog.java",
             "scripts/android/RdAccountClient.java",
             "scripts/android/CometRestartActivity.java", "scripts/android/UpdateClient.java",
-            "scripts/android/JedflixUpdates.java", "scripts/android/UpdateActivity.java",
+            "scripts/android/JedflixUpdates.java",
             "scripts/android/AboutSettings.java", generated, build_config)
         run(BUILD_TOOLS / "d8", "--lib", android, "--min-api", "26", "--output", dex, *classes.rglob("*.class"), qr_library)
         shutil.copyfile(dex / "classes.dex", stage / "classes10.dex")
