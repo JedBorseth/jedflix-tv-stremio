@@ -74,6 +74,8 @@ while time.monotonic() < deadline:
         break
     nodes = snapshot()
     if any('packageinstaller' in n.get('package', '') for n in nodes):
+        failure = next((n.get('text') for n in nodes if n.get('text', '').startswith('App not installed')), None)
+        assert failure is None, 'Android installer rejected the update: ' + str(failure)
         if not tap(nodes, 'Update'):
             tap(nodes, 'Install')
     elif any(n.get('package') == 'com.android.tv.settings' for n in nodes):
@@ -90,6 +92,12 @@ while time.monotonic() < deadline:
             time.sleep(0.5)
         run('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     else:
+        # Changing install permission can kill the app; its Settings screen then
+        # returns to General while the updater restores the verified download.
+        labels = {n.get('text') for n in nodes}
+        if 'About' in labels and 'Software update' not in labels and 'Update now' not in labels:
+            tap(nodes, 'About')
+            continue
         for label in ('Install ' + args.expect_version, 'Download ' + args.expect_version, 'Update now', 'Check for updates'):
             if tap(nodes, label):
                 break

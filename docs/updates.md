@@ -46,8 +46,8 @@ To prepare a release:
 
    ```bash
    python3 scripts/prepare-update.py \
-     dist/jedflix-app-1.0.3-arm64-v8a.apk \
-     dist/jedflix-app-1.0.3-x86_64.apk
+     dist/jedflix-app-1.0.4-arm64-v8a.apk \
+     dist/jedflix-app-1.0.4-x86_64.apk
    ```
 
    Optionally pass `--notes path/to/plain-text-notes.txt`. The helper verifies
@@ -56,7 +56,7 @@ To prepare a release:
    and SHA-256 hashes. One ABI is allowed for local testing, but production
    releases should contain both. Unsupported devices receive an explicit error.
 
-   Run the helper again with `--compat` and the two `dist/jedflix-1.0.3-ABI.apk`
+   Run the helper again with `--compat` and the two `dist/jedflix-1.0.4-ABI.apk`
    handoff files to generate `dist/jedflix-update.json`. Both manifests and all
    four APKs must agree on the release version and signing key.
 
@@ -107,10 +107,10 @@ are for local test builds only:
 JEDFLIX_VERSION_NAME=1.0.0 JEDFLIX_VERSION_CODE=34194309 ./scripts/build.sh x86_64
 ./scripts/dev.sh --no-build
 ./scripts/build.sh x86_64
-python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk
-python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk --phase install
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.4-x86_64.apk
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.4-x86_64.apk --phase install
 # Confirm permissions and installation on the TV. Self-replacement kills instrumentation.
-python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk --phase after
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.4-x86_64.apk --phase after
 ```
 
 The separately installed test APK supplies deterministic GitHub responses to
@@ -158,7 +158,9 @@ The new legacy bridge never downloads or opens those compatibility artifacts.
 ## Coexistence details
 
 The new package, provider authorities, compiled search UriMatcher, searchable XML,
-and compiled application ID all use the separate Jedflix identity. Upstream Java
+compiled application ID, and declared signature permissions all use the separate
+Jedflix identity. Release preparation rejects any stock Stremio permission or
+provider references left in a separate-package APK. Upstream Java
 and native class names remain intact for JNI. The private APK provider is
 `com.jedflix.stremio.updates`, derived from the installed package at runtime.
 
@@ -177,3 +179,8 @@ After publishing, `scripts/verify-update-ui.py --expect-version VERSION` drives
 Settings → About, install permission, and Android’s installer. Run `--phase after`
 to verify the settings digest and private marker survived. `--compat` on the
 validation helper targets the original fork and its handoff APK.
+
+Version 1.0.3 was withdrawn to prerelease after an on-device update exposed a
+stock AndroidX permission name. Version 1.0.4 fixes the declaration and usage;
+coexistence verification must include updating Jedflix with stock Stremio already
+installed, because a fresh install in the opposite order can hide this collision.

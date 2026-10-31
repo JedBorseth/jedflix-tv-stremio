@@ -17,6 +17,14 @@ tree = ET.parse(path)
 root = tree.getroot()
 root.set("package", package)
 for element in root.iter():
+    if element.tag in {"permission", "uses-permission", "uses-permission-sdk-23", "permission-tree", "permission-group"}:
+        name = element.get(A + "name", "")
+        if name.startswith(old + "."):
+            element.set(A + "name", package + name[len(old):])
+    for attribute in ["permission", "readPermission", "writePermission"]:
+        name = element.get(A + attribute, "")
+        if name.startswith(old + "."):
+            element.set(A + attribute, package + name[len(old):])
     authority = element.get(A + "authorities")
     if authority:
         element.set(A + "authorities", authority.replace(old, package))

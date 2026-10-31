@@ -41,6 +41,9 @@ def prepare(apks, output, notes, compat=False):
         name, code, version = package.groups()
         if name != expected_package or int(code) <= 34194308 or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
             raise ValueError(f"Not a versioned Jedflix release: {apk}")
+        xml = subprocess.check_output([str(tools / "aapt2"), "dump", "xmltree", str(apk), "--file", "AndroidManifest.xml"], text=True)
+        if name != "com.stremio.one" and re.search(r'="com\.stremio\.one\.', xml):
+            raise ValueError(f"APK still declares or references a stock Stremio permission/provider identity: {apk}")
         if "android.permission.REQUEST_INSTALL_PACKAGES" not in badging:
             raise ValueError(f"APK has no self-update permission: {apk}")
         minimum = int(re.search(r"(?:minSdkVersion|sdkVersion):'([0-9]+)'", badging).group(1))
