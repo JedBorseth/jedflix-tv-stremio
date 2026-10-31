@@ -17,6 +17,19 @@ import org.json.*;
 public class UpdateClient {
     static final String REPO = JedflixBuild.REPOSITORY;
     static final String RELEASES = "https://github.com/" + REPO + "/releases/download/";
+    private final boolean migration;
+    public UpdateClient() { this(false); }
+    private UpdateClient(boolean migration) { this.migration=migration; }
+    public static UpdateClient migration() { return new UpdateClient(true); }
+    private String targetPackage(Context context) {
+        return migration ? JedflixBuild.APPLICATION_ID : context.getPackageName();
+    }
+    private long installedCode(Context context) throws Exception {
+        if (!migration) return code(installed(context));
+        if (!"com.stremio.one".equals(context.getPackageName())) throw new IOException("Migration is only available from the old Jedflix package.");
+        try { return code(context.getPackageManager().getPackageInfo(targetPackage(context),signingFlags())); }
+        catch (PackageManager.NameNotFoundException missing) { return 0; }
+    }
     private volatile boolean cancelled;
     private volatile HttpURLConnection connection;
     public interface Progress { void changed(long read, long total); }
@@ -97,14 +110,14 @@ public class UpdateClient {
         String manifest=null;
         for (int i=0;i<assets.length();i++) {
             JSONObject asset=assets.getJSONObject(i);
-            if ("jedflix-update.json".equals(asset.optString("name"))) {
+            if (JedflixBuild.UPDATE_MANIFEST.equals(asset.optString("name"))) {
                 manifest=asset.getString("browser_download_url");
-                if (!manifest.equals(prefix+"jedflix-update.json")) throw new IOException("Unexpected update manifest address.");
+                if (!manifest.equals(prefix+JedflixBuild.UPDATE_MANIFEST)) throw new IOException("Unexpected update manifest address.");
             }
         }
         if (manifest==null) throw new IOException("This release has no Jedflix update manifest.");
-        return parseManifest(new JSONObject(json(manifest,false)),tag,context.getPackageName(),
-            code(installed(context)),Build.SUPPORTED_ABIS,Build.VERSION.SDK_INT);
+        return parseManifest(new JSONObject(json(manifest,false)),tag,targetPackage(context),
+            installedCode(context),Build.SUPPORTED_ABIS,Build.VERSION.SDK_INT);
     }
     static Release parseManifest(JSONObject m,String tag,String packageName,long installed,String[] abis,int sdk) throws Exception {
         if (m.getInt("schemaVersion")!=1 || !packageName.equals(m.getString("packageName"))) throw new IOException("Update is for a different app.");
@@ -119,7 +132,7 @@ public class UpdateClient {
         if (artifact==null) throw new IOException("No update is available for this TV's processor.");
         String url=artifact.getString("url"), hash=artifact.getString("sha256");
         long size=artifact.getLong("size");
-        String expected=RELEASES+tag+"/jedflix-"+version+"-"+abi+".apk";
+        String expected=RELEASES+tag+"/"+JedflixBuild.APK_PREFIX+"-"+version+"-"+abi+".apk";
         if (!url.equals(expected) || !hash.matches("[0-9a-f]{64}") || size<=0 || size>1073741824L)
             throw new IOException("Invalid update file metadata.");
         return new Release(code,size,version,m.optString("notes", "").substring(0,Math.min(4000,m.optString("notes", "").length())),abi,url,hash);
@@ -167,8 +180,8 @@ public class UpdateClient {
         if (!hash.toString().equals(release.sha256)) throw new IOException("Update checksum failed. Check for updates and retry.");
         PackageInfo apk=context.getPackageManager().getPackageArchiveInfo(file.getAbsolutePath(),signingFlags());
         PackageInfo current=installed(context);
-        if (apk==null || !context.getPackageName().equals(apk.packageName)) throw new IOException("Downloaded APK is for a different app.");
-        if (code(apk)!=release.code || code(apk)<=code(current) || !release.version.equals(apk.versionName)) throw new IOException("APK version does not match this update.");
+        if (apk==null || !targetPackage(context).equals(apk.packageName)) throw new IOException("Downloaded APK is for a different app.");
+        if (code(apk)!=release.code || code(apk)<=installedCode(context) || !release.version.equals(apk.versionName)) throw new IOException("APK version does not match this update.");
         if (apk.applicationInfo==null || apk.applicationInfo.minSdkVersion>Build.VERSION.SDK_INT) throw new IOException("APK needs a newer Android version.");
         if (!signers(current).equals(signers(apk))) throw new IOException("Update signing key differs from the installed Jedflix app. Contact the app owner.");
         try (ZipFile zip=new ZipFile(file)) {

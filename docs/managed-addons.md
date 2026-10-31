@@ -132,7 +132,7 @@ python3 scripts/verify-addon-lock.py --fresh-test --account-test
 ```
 
 Output: `dist/jedflix-managed-addons.apk`. It updates this workspace's locally
-signed `com.stremio.one` installation. The old `com.jedflix.tv` app remains separate.
+signed `com.jedflix.stremio` installation. The old `com.jedflix.tv` app remains separate.
 The normal `./scripts/build.sh` command also applies this policy and copies the
 managed build to `dist/jedflix-android-tv-1.10.4-arm64.apk`; both distribution APKs
 use the same owner-managed sources and guest-based prototype.

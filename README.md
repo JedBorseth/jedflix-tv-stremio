@@ -94,8 +94,10 @@ the local `JedFlix_Stream_Test` AVD is ARM64.
 
 The updater reads the latest stable release of
 [`JedBorseth/jedflix-tv-stremio`](https://github.com/JedBorseth/jedflix-tv-stremio).
-A release must include `jedflix-update.json` plus the versioned ARM64 and x86_64
-APKs. See [docs/updates.md](docs/updates.md) for the manifest contract and
+Jedflix uses `com.jedflix.stremio` and can coexist with stock Stremio.
+A release includes `jedflix-app-update.json` and `jedflix-app-VERSION-ABI.apk` for
+both architectures, plus the original updater manifest and signed handoff APKs
+for existing fork installations. See [docs/updates.md](docs/updates.md) for the manifest contract and
 `scripts/prepare-update.py` for generating release files.
 
 Pushing source alone does not publish an update. Always keep the same signing

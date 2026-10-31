@@ -51,6 +51,11 @@ public final class JedflixUpdates {
             boolean scheduled;
             @Override public void onActivityResumed(Activity activity) {
                 if (!MAIN.equals(activity.getClass().getName())) return;
+                if ("com.stremio.one".equals(app.getPackageName())) {
+                    activity.startActivity(new Intent(activity,PackageMigrationActivity.class));
+                    activity.finish();
+                    return;
+                }
                 owner=new WeakReference<>(activity);
                 updates.returned();
                 if (scheduled) return;

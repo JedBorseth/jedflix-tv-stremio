@@ -75,4 +75,4 @@ else:
     stream = {"url": args.url, "name": "Jedflix feasibility test", "title": "Generated test clip"}
     data = base64.b64encode(zlib.compress(json.dumps(stream).encode())).decode()
     link = "stremio:///player/" + quote(data, safe="")
-    subprocess.run([ADB, "-s", SERIAL, "shell", "am", "start", "-W", "-a", "android.intent.action.VIEW", "-d", link, "-n", "com.stremio.one/com.stremio.tv.MainActivity"], check=True)
+    subprocess.run([ADB, "-s", SERIAL, "shell", "am", "start", "-W", "-a", "android.intent.action.VIEW", "-d", link, "-n", "com.jedflix.stremio/com.stremio.tv.MainActivity"], check=True)

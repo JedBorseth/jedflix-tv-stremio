@@ -7,10 +7,11 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-adb = Path(os.environ.get("ANDROID_HOME", str(Path.home() / "Library/Android/sdk"))) / "platform-tools/adb"
+adb = ROOT / "scripts/adb.sh"
+serial = os.environ.get("JEDFLIX_SERIAL", "emulator-5554")
 
 def run(*args):
-    return subprocess.run([str(adb), *map(str, args)], check=True, capture_output=True, text=True).stdout
+    return subprocess.run([str(adb), "-s", serial, *map(str, args)], check=True, capture_output=True, text=True).stdout
 
 def snapshot():
     run("shell", "uiautomator", "dump", "/sdcard/jedflix-comet-layout.xml")
@@ -29,8 +30,8 @@ def tap(text):
     run("shell", "input", "tap", (x1+x2)//2, (y1+y2)//2)
     return True
 
-run("shell", "am", "force-stop", "com.stremio.one")
-run("shell", "am", "start", "-W", "-n", "com.stremio.one/com.stremio.tv.MainActivity")
+run("shell", "am", "force-stop", "com.jedflix.stremio")
+run("shell", "am", "start", "-W", "-n", "com.jedflix.stremio/com.stremio.tv.MainActivity")
 for _ in range(5):
     run("shell", "input", "keyevent", 21)
     if tap("Settings"): break
@@ -39,7 +40,7 @@ assert tap("General")
 general = snapshot()
 reference = bounds(find(general, "Language"))
 with (ROOT / ".local/comet-reference-general.png").open("wb") as image:
-    subprocess.run([str(adb), "exec-out", "screencap", "-p"], check=True, stdout=image)
+    subprocess.run([str(adb), "-s", serial, "exec-out", "screencap", "-p"], check=True, stdout=image)
 assert tap("Real-Debrid")
 page = snapshot()
 key = find(page, "Real-Debrid account")

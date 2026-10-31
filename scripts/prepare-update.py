@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate signed APKs and write the manifest consumed by Jedflix's updater.
 
-Does not publish anything. Upload the resulting APKs and jedflix-update.json
+Does not publish anything. Upload the resulting APKs and the generated update manifest
 together as assets of the stable GitHub release printed by this command.
 """
 import argparse
@@ -17,8 +17,11 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def prepare(apks, output, notes):
+def prepare(apks, output, notes, compat=False):
     config = json.loads((ROOT / "assets/update-config.json").read_text())
+    expected_package = "com.stremio.one" if compat else config["packageName"]
+    prefix = "jedflix" if compat else config["artifactPrefix"]
+    manifest_name = "jedflix-update.json" if compat else config["manifestName"]
     sdk = Path(os.environ.get("ANDROID_HOME", str(Path.home() / "Library/Android/sdk")))
     tools = Path(os.environ.get("BUILD_TOOLS", str(sdk / "build-tools/36.0.0")))
     artifacts = {}
@@ -36,7 +39,7 @@ def prepare(apks, output, notes):
         if not package:
             raise ValueError(f"Cannot read APK identity: {apk}")
         name, code, version = package.groups()
-        if name != "com.stremio.one" or int(code) <= 34194308 or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        if name != expected_package or int(code) <= 34194308 or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
             raise ValueError(f"Not a versioned Jedflix release: {apk}")
         if "android.permission.REQUEST_INSTALL_PACKAGES" not in badging:
             raise ValueError(f"APK has no self-update permission: {apk}")
@@ -52,7 +55,7 @@ def prepare(apks, output, notes):
         abi = abis.pop()
         if abi in artifacts:
             raise ValueError(f"Duplicate architecture: {abi}")
-        filename = f"jedflix-{version}-{abi}.apk"
+        filename = f"{prefix}-{version}-{abi}.apk"
         with apk.open('rb') as source:
             digest = hashlib.file_digest(source, 'sha256').hexdigest()
         artifacts[abi] = {"url": f"https://github.com/{config['repository']}/releases/download/v{version}/{filename}",
@@ -62,7 +65,7 @@ def prepare(apks, output, notes):
             shutil.copyfile(apk, destination)
         manifest = {"schemaVersion": 1, "packageName": name, "versionCode": int(code),
                     "versionName": version, "minSdk": minimum, "notes": notes, "artifacts": artifacts}
-    destination = output / "jedflix-update.json"
+    destination = output / manifest_name
     destination.write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Prepared {destination} for {config['repository']} stable release v{identity[2]} ({', '.join(artifacts)})")
     print("Publish the manifest and all listed APKs together. Keep the signing keystore backed up.")
@@ -73,5 +76,6 @@ if __name__ == '__main__':
     parser.add_argument('apks', nargs='+', type=Path)
     parser.add_argument('--output', type=Path, default=ROOT / 'dist')
     parser.add_argument('--notes', type=Path, help='Plain-text release notes file')
+    parser.add_argument('--compat', action='store_true', help='Prepare the original package handoff manifest for existing updaters')
     args = parser.parse_args()
-    prepare(args.apks, args.output, args.notes.read_text() if args.notes else '')
+    prepare(args.apks, args.output, args.notes.read_text() if args.notes else '', args.compat)

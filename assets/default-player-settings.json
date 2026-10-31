@@ -2,7 +2,7 @@
   "interfaceLanguage": "eng",
   "hideSpoilers": false,
   "gamepadSupport": false,
-  "streamingServerUrl": "http://127.0.0.1:11470/",
+  "streamingServerUrl": "http://127.0.0.1:11480/",
   "playerType": null,
   "bingeWatching": true,
   "playInBackground": true,

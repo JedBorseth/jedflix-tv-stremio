@@ -4,8 +4,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SERIAL="${JEDFLIX_SERIAL:-emulator-5554}"
-APK="dist/jedflix-android-tv-1.10.4-x86_64.apk"
-PACKAGE="com.stremio.one"
+ARCH="${JEDFLIX_ARCH:-x86_64}"
+case "$ARCH" in
+  x86_64|arm64) ;;
+  *) echo "JEDFLIX_ARCH must be x86_64 or arm64" >&2; exit 2 ;;
+esac
+APK="dist/jedflix-android-tv-1.10.4-$ARCH.apk"
+PACKAGE="com.jedflix.stremio"
 ACTIVITY="${PACKAGE}/com.stremio.tv.MainActivity"
 BUILD=1
 LAUNCH=1
@@ -14,7 +19,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/dev.sh [--no-build] [--no-launch]
 
-  --no-build   Reinstall the existing x86_64 APK without rebuilding
+  --no-build   Reinstall the existing APK for JEDFLIX_ARCH (default x86_64) without rebuilding
   --no-launch  Install but do not start the app
 EOF
 }
@@ -43,7 +48,7 @@ done
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 
 if [[ "$BUILD" == 1 ]]; then
-  ./scripts/build.sh x86_64
+  ./scripts/build.sh "$ARCH"
 fi
 
 if [[ ! -f "$APK" ]]; then
@@ -52,7 +57,7 @@ if [[ ! -f "$APK" ]]; then
 fi
 
 ./scripts/adb.sh -s "$SERIAL" devices | tail -n +2 | grep -q . \
-  || { echo "no device on $SERIAL; is the Windows emulator running?" >&2; exit 1; }
+  || { echo "no device on $SERIAL; is the selected emulator running?" >&2; exit 1; }
 
 ./scripts/adb.sh -s "$SERIAL" install -r "$APK"
 

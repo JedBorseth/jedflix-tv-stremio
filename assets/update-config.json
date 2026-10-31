@@ -1,5 +1,8 @@
 {
-  "versionName": "1.0.2",
-  "versionCode": 34194311,
+  "versionName": "1.0.3",
+  "versionCode": 34194312,
+  "packageName": "com.jedflix.stremio",
+  "manifestName": "jedflix-app-update.json",
+  "artifactPrefix": "jedflix-app",
   "repository": "JedBorseth/jedflix-tv-stremio"
 }

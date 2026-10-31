@@ -15,12 +15,16 @@ The source is the latest **stable published release** of
 `JedBorseth/jedflix-tv-stremio`. Drafts and prereleases are excluded. Each release
 must have these assets:
 
-- `jedflix-update.json`
-- `jedflix-VERSION-arm64-v8a.apk` for physical ARM64 TVs
-- `jedflix-VERSION-x86_64.apk` for the shared Windows emulator
+- `jedflix-app-update.json` for `com.jedflix.stremio`
+- `jedflix-app-VERSION-arm64-v8a.apk` for physical ARM64 TVs
+- `jedflix-app-VERSION-x86_64.apk` for the shared Windows emulator
+- `jedflix-update.json` plus `jedflix-VERSION-ABI.apk` for both architectures:
+  signed handoff updates of the original `com.stremio.one` fork. Keep these
+  compatibility assets in every stable release while original fork installs exist.
 
 Tags use `vMAJOR.MINOR.PATCH`. `assets/update-config.json` owns the Jedflix
-version name, integer version code, and repository. The code must increase for
+version name, integer version code, package ID, manifest name, artifact prefix,
+and repository. The code must increase for
 every distributed release, be identical across architectures, and exceed both
 original Stremio codes (maximum 34194308). This prevents accidentally downgrading
 the x86_64 upstream build when switching to Jedflix versioning. Upstream Stremio
@@ -33,25 +37,31 @@ To prepare a release:
 
    ```bash
    ./scripts/build.sh x86_64
+   python3 scripts/spike-build.py --lock-addons --compat
    ./scripts/build.sh arm64
+   python3 scripts/spike-build.py --lock-addons --compat
    ```
 
 3. Generate the release files, substituting the configured version:
 
    ```bash
    python3 scripts/prepare-update.py \
-     dist/jedflix-1.0.1-arm64-v8a.apk \
-     dist/jedflix-1.0.1-x86_64.apk
+     dist/jedflix-app-1.0.3-arm64-v8a.apk \
+     dist/jedflix-app-1.0.3-x86_64.apk
    ```
 
    Optionally pass `--notes path/to/plain-text-notes.txt`. The helper verifies
    signatures, alignment, package identity, ABI, version consistency and the
-   install permission. It writes `dist/jedflix-update.json` with exact file sizes
+   install permission. It writes `dist/jedflix-app-update.json` with exact file sizes
    and SHA-256 hashes. One ABI is allowed for local testing, but production
    releases should contain both. Unsupported devices receive an explicit error.
 
+   Run the helper again with `--compat` and the two `dist/jedflix-1.0.3-ABI.apk`
+   handoff files to generate `dist/jedflix-update.json`. Both manifests and all
+   four APKs must agree on the release version and signing key.
+
 4. Push the source and create a **draft** release tagged with that version.
-   Upload the manifest and both versioned APKs, then publish the complete release.
+   Upload both manifests and all four versioned APKs, then publish the complete release.
    Pushing source alone does not make an update available. Do not replace assets
    on an existing release: publish a higher version code for corrections.
 
@@ -97,10 +107,10 @@ are for local test builds only:
 JEDFLIX_VERSION_NAME=1.0.0 JEDFLIX_VERSION_CODE=34194309 ./scripts/build.sh x86_64
 ./scripts/dev.sh --no-build
 ./scripts/build.sh x86_64
-python3 scripts/verify-updates.py --candidate dist/jedflix-1.0.1-x86_64.apk
-python3 scripts/verify-updates.py --phase install
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk --phase install
 # Confirm permissions and installation on the TV. Self-replacement kills instrumentation.
-python3 scripts/verify-updates.py --phase after
+python3 scripts/verify-updates.py --candidate dist/jedflix-app-1.0.3-x86_64.apk --phase after
 ```
 
 The separately installed test APK supplies deterministic GitHub responses to
@@ -114,55 +124,56 @@ No test transport, fixture URLs or probe classes are packaged in Jedflix.
 
 ## Moving users from jedflix-tv
 
-The inspected legacy code is at commit
-`fab4d75c1f97171311e2c9f55cf987301aabcd78` in
-[jedflix-tv](https://github.com/JedBorseth/jedflix-tv/tree/fab4d75c1f97171311e2c9f55cf987301aabcd78/app/src/main/java/com/jedflix/tv/data/update).
-It fetches its own latest GitHub release, compares version labels, picks an APK,
-downloads it and opens the Android installer. It switched away from install
-sessions after Google TV launcher/resume problems. It caches by file size and
-checks a hardcoded certificate for the installed app rather than validating the
-downloaded APK before opening the installer. Those assumptions are improved in
-this fork's updater.
+The legacy app is `com.jedflix.tv`. Version 0.9.3 and later fetch
+`jedflix-app-update.json`, select the right ABI, verify the package and pinned
+Jedflix signing certificate, and install `com.jedflix.stremio` alongside the old
+app and stock Stremio. Android's installer owns confirmation. The bridge checks
+the installed app's signature before opening it. Its package-visibility query
+includes the new ID. No stock Stremio install needs to be removed.
 
-**A direct replacement of the old Android package is not supported.** Legacy
-Jedflix is `com.jedflix.tv`; the Stremio fork is `com.stremio.one`. Keep the new
-package unchanged to preserve its compiled/native integrations. Android treats
-these as two independent apps, even if their labels match. See Android's
-[app-signing documentation](https://developer.android.com/studio/publish/app-signing).
+The legacy app and the new app have separate private data. History, My List, and
+Real-Debrid settings are not imported. Keep the old app until onboarding succeeds.
 
-The safe rollout is:
+## Moving original fork installations
 
-1. Publish and verify this fork's stable release, including an actual update
-   from a lower version code to a higher version code on a physical ARM64 TV.
-2. Ship a bridge update **of the old app**, using the old package ID and its
-   existing signing key. Its current updater must continue finding a legacy
-   bridge APK in the old repository. Do not simply publish this fork's APK as
-   the old app's next self-update.
-3. In that bridge, offer **Move to the new Jedflix**. Fetch this repository's
-   release manifest, select the right ABI, validate the new package and a pinned
-   fork signing certificate, install it alongside the old app, and provide an
-   Open new Jedflix action. Android 11+ package visibility needs a query for
-   `com.stremio.one`.
-4. Keep the old app until installation and onboarding succeed. Offer removal
-   only as a separate user action. The new app currently has no importer for the
-   old app's account, library/history or Real-Debrid settings; importing them
-   requires an explicit export/import bridge. Android does not share app-private
-   storage merely because labels or owners match.
+Fork versions 1.0.2 and earlier used `com.stremio.one`, so Android cannot replace
+them with `com.jedflix.stremio` as an ordinary self-update. Their existing updater
+is immutable and looks for `jedflix-update.json` and `jedflix-VERSION-ABI.apk` on
+the latest stable release. Those compatibility assets therefore remain available.
 
-The legacy bridge and its releases are maintained separately in `jedflix-tv`.
+The compatibility APK has the original package and Jedflix signing key and a
+higher code. After updating, its launcher is labelled **Jedflix migration** and opens a handoff
+screen. This bridge uses a plain Android Application and exposes only the handoff
+activity and private APK provider; it never starts a second native core or server. That screen
+reads `jedflix-app-update.json` and validates the new package, version, ABI, hash,
+size, and certificate before installing the separate app. It then opens only the
+correctly signed new Jedflix. The old fork stays installed and retains its private
+data; Real-Debrid settings and library are not copied automatically. Users may
+remove the old fork after setting up the new app, then install stock Stremio in
+its freed app slot. Removal is a separate Android settings action.
 
-### Stock Stremio already installed
+Stock Stremio cannot accept the compatibility APK because its signing key differs.
+The new legacy bridge never downloads or opens those compatibility artifacts.
 
-Stock Stremio and this fork both use `com.stremio.one`, but their signing keys
-are different. They cannot coexist or replace one another through an update.
-The legacy 0.9.1 bridge checks only the installed package ID and can mistakenly
-open stock Stremio instead of downloading Jedflix. This produces the original
-Stremio QR login screen even though the released Jedflix APK bypasses login.
+## Coexistence details
 
-To recover on that version, uninstall **Stremio** in Android settings, then reopen
-**the legacy Jedflix app** and complete its migration. Uninstalling Stremio removes
-its local app data. Keep `com.jedflix.tv` installed during this process.
+The new package, provider authorities, compiled search UriMatcher, searchable XML,
+and compiled application ID all use the separate Jedflix identity. Upstream Java
+and native class names remain intact for JNI. The private APK provider is
+`com.jedflix.stremio.updates`, derived from the installed package at runtime.
 
-The [legacy 0.9.2 bridge](https://github.com/JedBorseth/jedflix-tv/releases/tag/v0.9.2) verifies the installed app's signing certificate and
-version before forwarding. A conflicting install stays on an explanation screen
-with a button to open Stremio's Android settings; removing it returns to migration.
+Jedflix's local streaming server uses HTTP 11480 (fallback through 11484) and HTTPS
+12480. Its default core settings and proxy/subtitle client use those ports too.
+Stock Stremio keeps 11470/12470, so background services cannot cross-route playback
+or subtitle requests. Existing custom streaming-server settings remain explicit.
+
+Changing the package creates a separate installation. Later updates of
+`com.jedflix.stremio` keep its package and signing key and preserve its settings,
+Android Keystore, and library normally.
+
+For a live GitHub update on a disposable TV, run the validation checks against a
+newer candidate, then `--phase mark` to seed a real encrypted settings fixture.
+After publishing, `scripts/verify-update-ui.py --expect-version VERSION` drives
+Settings → About, install permission, and Android’s installer. Run `--phase after`
+to verify the settings digest and private marker survived. `--compat` on the
+validation helper targets the original fork and its handoff APK.

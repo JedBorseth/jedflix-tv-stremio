@@ -92,7 +92,7 @@ manifest = work / 'AndroidManifest.xml'
 manifest.write_text('''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jedflix.audioprobe">
 <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36"/>
 <application android:label="Jedflix audio verification"/>
-<instrumentation android:name="com.jedflix.test.NightAudioProbe" android:targetPackage="com.stremio.one"/>
+<instrumentation android:name="com.jedflix.test.NightAudioProbe" android:targetPackage="com.jedflix.stremio"/>
 </manifest>''')
 run(build_tools / 'aapt2', 'link', '-I', android, '--manifest', manifest, '-o', work / 'unsigned.apk')
 with zipfile.ZipFile(work / 'unsigned.apk', 'a') as archive:

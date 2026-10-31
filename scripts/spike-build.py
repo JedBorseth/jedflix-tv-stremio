@@ -30,11 +30,15 @@ if os.environ.get("JEDFLIX_BUILD_LOCK_HELD") != "1":
 parser = argparse.ArgumentParser()
 parser.add_argument("--lock-addons", action="store_true", help="Remove user addon management and reject mutations")
 parser.add_argument("--fresh-test", action="store_true", help="Build an isolated package for fresh-install verification")
+parser.add_argument("--compat", action="store_true", help="Build the signed handoff update for the original fork package")
 args = parser.parse_args()
 assert not args.fresh_test or args.lock_addons
+assert not args.compat or (args.lock_addons and not args.fresh_test)
 output = "dist/jedflix-managed-addons.apk" if args.lock_addons else "dist/jedflix-feasibility-spike.apk"
 if args.fresh_test:
     output = ".local/jedflix-fresh-addon-test.apk"
+elif args.compat:
+    output = "dist/jedflix-compat.apk"
 SDK = Path(os.environ.get("ANDROID_HOME", str(Path.home() / "Library/Android/sdk")))
 BUILD_TOOLS = Path(os.environ.get("BUILD_TOOLS", str(SDK / "build-tools/36.0.0")))
 
@@ -66,6 +70,9 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         (stage / "classes9.dex").unlink()
         run("python3", "scripts/addon-lock-patch.py", stage)
         run("python3", "scripts/comet-settings-patch.py", stage)
+        update_config = json.loads(Path("assets/update-config.json").read_text())
+        package = "com.jedflix.presettest" if args.fresh_test else "com.stremio.one" if args.compat else update_config["packageName"]
+        run("python3", "scripts/package-patch.py", stage, package)
         run("python3", "scripts/update-patch.py", stage)
         # Keep upstream decoders and mpv intact. Build just the ABI-compatible
         # audio filter library, then add the in-player Night mode control.
@@ -104,6 +111,9 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         build_config.write_text("package com.jedflix.tv; public final class JedflixBuild {"
             + "public static final String VERSION_NAME = " + json.dumps(version_name) + ";"
             + "public static final long VERSION_CODE = " + str(version_code) + "L;"
+            + "public static final String APPLICATION_ID = " + json.dumps(update_config["packageName"]) + ";"
+            + "public static final String UPDATE_MANIFEST = " + json.dumps(update_config["manifestName"]) + ";"
+            + "public static final String APK_PREFIX = " + json.dumps(update_config["artifactPrefix"]) + ";"
             + "public static final String REPOSITORY = " + json.dumps(update_config["repository"]) + ";}")
         android = SDK / "platforms/android-36/android.jar"
         stubs = helper / "stubs"
@@ -117,19 +127,10 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             "scripts/android/RdAccountClient.java",
             "scripts/android/CometRestartActivity.java", "scripts/android/UpdateClient.java",
             "scripts/android/JedflixUpdates.java",
+            "scripts/android/PackageMigrationActivity.java",
             "scripts/android/AboutSettings.java", "scripts/android/NightAudio.java", generated, build_config)
         run(BUILD_TOOLS / "d8", "--lib", android, "--min-api", "26", "--output", dex, *classes.rglob("*.class"), qr_library)
         shutil.copyfile(dex / "classes.dex", stage / "classes10.dex")
-        if args.fresh_test:
-            import xml.etree.ElementTree as ET
-            manifest_path = stage / "AndroidManifest.xml"
-            manifest = ET.parse(manifest_path)
-            manifest.getroot().set("package", "com.jedflix.presettest")
-            for element in manifest.iter():
-                for key, value in list(element.attrib.items()):
-                    if key.endswith("}authorities"):
-                        element.set(key, value.replace("com.stremio.one", "com.jedflix.presettest"))
-            manifest.write(manifest_path, encoding="utf-8", xml_declaration=True)
     run("java", "-jar", ".local/tools/apktool.jar", "b", stage, "-o", ".local/spike-unsigned.apk")
 run(BUILD_TOOLS / "zipalign", "-P", "16", "-f", "4", ".local/spike-unsigned.apk", ".local/spike-aligned.apk")
 run(BUILD_TOOLS / "apksigner", "sign", "--ks", ".local/jedflix-local.jks",
@@ -140,4 +141,5 @@ run(BUILD_TOOLS / "zipalign", "-c", "-P", "16", "4", output)
 if args.lock_addons and not args.fresh_test:
     abis = [p.name for p in Path(".local/decoded/lib").iterdir() if p.is_dir()]
     assert len(abis) == 1, f"Expected a single-ABI build: {abis}"
-    shutil.copyfile(output, f"dist/jedflix-{version_name}-{abis[0]}.apk")
+    prefix = "jedflix" if args.compat else update_config["artifactPrefix"]
+    shutil.copyfile(output, f"dist/{prefix}-{version_name}-{abis[0]}.apk")

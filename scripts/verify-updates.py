@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""On-device updater checks. Requires an installed older Jedflix and a newer x86_64 candidate.
+"""On-device updater checks. Requires an installed older Jedflix and a newer candidate matching the device ABI.
 
 --phase install opens the real installer flow; confirm it with the TV remote.
 The self-update terminates instrumentation. Run --phase after to check persistence.
@@ -15,8 +15,9 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--candidate', type=Path, default=Path('dist/jedflix-1.0.1-x86_64.apk'))
-parser.add_argument('--phase', choices=['checks', 'prepare', 'install', 'after'], default='checks')
+parser.add_argument('--candidate', type=Path, required=True)
+parser.add_argument('--phase', choices=['checks', 'mark', 'prepare', 'install', 'after'], default='checks')
+parser.add_argument('--compat', action='store_true', help='Exercise the original fork updater against its handoff APK')
 args = parser.parse_args()
 sdk = Path(os.environ.get('ANDROID_HOME', str(Path.home() / 'Library/Android/sdk')))
 tools = Path(os.environ.get('BUILD_TOOLS', str(sdk / 'build-tools/36.0.0')))
@@ -30,12 +31,14 @@ def run(*command, **kwargs):
     return subprocess.run(list(map(str, command)), check=True, **kwargs)
 
 
-run('python3', 'scripts/prepare-update.py', args.candidate, '--output', work / 'release')
-manifest = work / 'release/jedflix-update.json'
 config = json.loads((ROOT / 'assets/update-config.json').read_text())
+if args.compat:
+    config.update(packageName='com.stremio.one', manifestName='jedflix-update.json', artifactPrefix='jedflix')
+run('python3', 'scripts/prepare-update.py', args.candidate, '--output', work / 'release', *(['--compat'] if args.compat else []))
+manifest = work / ('release/' + config['manifestName'])
 stubs = work / 'stubs/com/jedflix/tv'
 (stubs / 'JedflixBuild.java').write_text('package com.jedflix.tv; public class JedflixBuild {'
-    f'public static final String VERSION_NAME="{config["versionName"]}", REPOSITORY="{config["repository"]}"; }}')
+    f'public static final String VERSION_NAME="{config["versionName"]}", REPOSITORY="{config["repository"]}", APPLICATION_ID="{config["packageName"]}", UPDATE_MANIFEST="{config["manifestName"]}", APK_PREFIX="{config["artifactPrefix"]}"; }}')
 (stubs / 'JedflixUpdates.java').write_text('package com.jedflix.tv; public class JedflixUpdates {'
     'public boolean busy; public UpdateClient.Release release; public java.io.File apk; public String status;'
     'public static JedflixUpdates get(android.content.Context c) { return null; } public void cancel() {} public void updateNow() {} public void rememberReady() {} public boolean restoreReady() { return false; } }')
@@ -46,10 +49,10 @@ run('javac', '--release', '8', '-classpath', os.pathsep.join(map(str, [android, 
 run(tools / 'd8', '--lib', android, '--classpath', work / 'api', '--min-api', '26',
     '--output', work / 'dex', *(work / 'classes').rglob('*.class'))
 probe_manifest = work / 'AndroidManifest.xml'
-probe_manifest.write_text('''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jedflix.updateprobe">
+probe_manifest.write_text(f'''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.jedflix.updateprobe">
 <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36"/>
 <application android:label="Jedflix update verification"/>
-<instrumentation android:name="com.jedflix.tv.UpdateProbe" android:targetPackage="com.stremio.one"/>
+<instrumentation android:name="com.jedflix.tv.UpdateProbe" android:targetPackage="{config['packageName']}"/>
 </manifest>''')
 unsigned = work / 'unsigned.apk'
 run(tools / 'aapt2', 'link', '-I', android, '--manifest', probe_manifest, '-o', unsigned)

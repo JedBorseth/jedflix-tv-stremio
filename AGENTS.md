@@ -30,13 +30,18 @@ server. Overrides: `JEDFLIX_DEVICE_HOST`, `JEDFLIX_DEVICE_USER`,
 ./scripts/build.sh arm64    # release build -> dist/jedflix-android-tv-1.10.4-arm64.apk
 ```
 
+For an explicitly requested local AVD, use `JEDFLIX_DEVICE_HOST=local` with
+`scripts/adb.sh`; match the APK to its ABI. The local `JedFlix_Stream_Test` and
+`Jedflix_Login_Repro` AVDs are ARM64. `scripts/dev.sh` accepts
+`JEDFLIX_ARCH=arm64` for those AVDs.
+
 The Windows AVD is x86_64, so the ARM64 artifact cannot be installed there. Use
 the x86_64 build for every dev/test cycle. The patch scripts are
 architecture-agnostic; `scripts/build.sh` pins the matching upstream APK and
 SHA-256 for each architecture.
 
-Package: `com.stremio.one`
-Activity: `com.stremio.one/com.stremio.tv.MainActivity`
+Package: `com.jedflix.stremio`
+Activity: `com.jedflix.stremio/com.stremio.tv.MainActivity`
 
 ## Seeing and driving the device
 
@@ -70,3 +75,10 @@ through `scripts/adb.sh`.
 - `scripts/build.sh` ends with apksigner verification and a 16 KB zipalign check.
 - `dist/jedflix-android-tv-1.10.4-x86_64.apk` should contain `lib/x86_64/`.
 - `dist/jedflix-android-tv-1.10.4-arm64.apk` should contain `lib/arm64-v8a/`.
+
+## Release identity
+
+Read [docs/updates.md](docs/updates.md) before publishing a release or changing
+package identity, updater metadata, or legacy migration. Each stable release
+keeps the old updater manifest and signed handoff APKs as well as the separate
+Jedflix app assets. Keep Java/JNI class names under their upstream namespaces.

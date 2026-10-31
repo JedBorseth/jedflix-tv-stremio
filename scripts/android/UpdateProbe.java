@@ -28,6 +28,19 @@ public final class UpdateProbe extends Instrumentation {
         Bundle report=new Bundle();
         try {
             target=getTargetContext();
+            if ("mark".equals(args.getString("phase"))) {
+                // Isolated test data only: seed a real encrypted file without making
+                // an RD request, then let the ordinary GitHub updater do the update.
+                target.getClassLoader().loadClass("com.jedflix.tv.CometConfig").getMethod("save",
+                    String.class,int.class,double.class,String.class,boolean.class,boolean.class,boolean.class)
+                    .invoke(null,"SYNTHETIC_UPDATE_ONLY",7,18.0,"720p",true,true,true);
+                check(!"absent".equals(configDigest()),"real encrypted configuration exists");
+                target.getSharedPreferences("jedflix_update_probe",0).edit().putString("marker","preserved-through-self-update")
+                    .putString("comet",configDigest()).commit();
+                target.getSharedPreferences("jedflix_updates",0).edit().clear().commit();
+                report.putString("result","PASS: persistence fixture ready for the real GitHub update");
+                finish(Activity.RESULT_OK,report); return;
+            }
             if ("after".equals(args.getString("phase"))) {
                 android.content.SharedPreferences saved=target.getSharedPreferences("jedflix_update_probe",0);
                 check("preserved-through-self-update".equals(saved.getString("marker","")),"private preferences survived");
@@ -64,7 +77,7 @@ public final class UpdateProbe extends Instrumentation {
                 throw new AssertionError("Install flow ended without a package replacement");
             }
             UpdateClient client=new UpdateClient();
-            check(release.abi.equals("x86_64"),"correct emulator architecture");
+            check(Arrays.asList(Build.SUPPORTED_ABIS).contains(release.abi),"correct device architecture");
             check(UpdateClient.parseManifest(manifest,tag,target.getPackageName(),release.code,Build.SUPPORTED_ABIS,36)==null,"equal code is not an update");
             check(UpdateClient.parseManifest(manifest,tag,target.getPackageName(),release.code+1,Build.SUPPORTED_ABIS,36)==null,"older code is not an update");
             rejected(()->UpdateClient.parseManifest(manifest,tag,"com.jedflix.tv",0,Build.SUPPORTED_ABIS,36),"legacy package cannot be a self-update");
@@ -72,7 +85,7 @@ public final class UpdateProbe extends Instrumentation {
             rejected(()->UpdateClient.parseManifest(manifest,tag,target.getPackageName(),0,Build.SUPPORTED_ABIS,1),"minimum SDK enforced");
             rejected(()->UpdateClient.parseManifest(manifest,"v99.0.0",target.getPackageName(),0,Build.SUPPORTED_ABIS,36),"tag and manifest version must match");
             JSONObject invalid=new JSONObject(manifest.toString());
-            invalid.getJSONObject("artifacts").getJSONObject("x86_64").put("url","https://evil.example/update.apk");
+            invalid.getJSONObject("artifacts").getJSONObject(release.abi).put("url","https://evil.example/update.apk");
             rejected(()->UpdateClient.parseManifest(invalid,tag,target.getPackageName(),0,Build.SUPPORTED_ABIS,36),"foreign APK URL rejected");
             for (String url:new String[]{"http://github.com/file","https://github.com.evil.example/file","https://user@github.com/file","https://github.com:8080/file"})
                 rejected(()->UpdateClient.trusted(new URL(url)),"unsafe URL rejected");
@@ -105,7 +118,7 @@ public final class UpdateProbe extends Instrumentation {
             rejected(()->new UpdateClient().verify(target,wrongSigner,wrong),"real APK with a different signing key rejected");
             UpdateClient.Release wrongVersion=new UpdateClient.Release(release.code+1,release.size,release.version,"",release.abi,release.url,release.sha256);
             rejected(()->new UpdateClient().verify(target,candidate,wrongVersion),"APK and manifest code mismatch rejected");
-            UpdateClient.Release wrongAbi=new UpdateClient.Release(release.code,release.size,release.version,"","arm64-v8a",release.url,release.sha256);
+            UpdateClient.Release wrongAbi=new UpdateClient.Release(release.code,release.size,release.version,"",release.abi.equals("arm64-v8a") ? "x86_64" : "arm64-v8a",release.url,release.sha256);
             rejected(()->new UpdateClient().verify(target,candidate,wrongAbi),"actual native libraries must match selected ABI");
             File finalFile=new FakeClient().download(target,release,(r,t)->{});
             UriTest(finalFile);
@@ -165,7 +178,7 @@ public final class UpdateProbe extends Instrumentation {
                         if(url.toString().endsWith(".json")) return new ByteArrayInputStream(manifest.toString().getBytes("UTF-8"));
                         JSONObject latest=new JSONObject().put("tag_name","v"+release.version).put("draft",false).put("prerelease",false);
                         JSONArray assets=new JSONArray();
-                        if(!missing) assets.put(new JSONObject().put("name","jedflix-update.json").put("browser_download_url",UpdateClient.RELEASES+"v"+release.version+"/jedflix-update.json"));
+                        if(!missing) assets.put(new JSONObject().put("name",JedflixBuild.UPDATE_MANIFEST).put("browser_download_url",UpdateClient.RELEASES+"v"+release.version+"/"+JedflixBuild.UPDATE_MANIFEST));
                         latest.put("assets",assets); return new ByteArrayInputStream(latest.toString().getBytes("UTF-8"));
                     } catch (Exception error) { throw new IOException(error); }
                 }
