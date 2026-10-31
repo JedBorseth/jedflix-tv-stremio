@@ -39,6 +39,7 @@ rm .local/decoded/classes5.dex .local/decoded/classes6.dex
 cp -R .local/theme-code/smali_classes5 .local/decoded/smali_classes5
 cp -R .local/theme-code/smali_classes6 .local/decoded/smali_classes6
 python3 scripts/theme.py .local/decoded
+python3 scripts/logo-patch.py .local/decoded
 java -jar .local/tools/apktool.jar b .local/decoded -o .local/jedflix-unsigned.apk
 "$BUILD_TOOLS/zipalign" -P 16 -f 4 .local/jedflix-unsigned.apk .local/jedflix-aligned.apk
 if [[ ! -f .local/jedflix-local.jks ]]; then

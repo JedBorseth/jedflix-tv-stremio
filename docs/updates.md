@@ -49,9 +49,9 @@ To prepare a release:
 
    ```bash
    python3 scripts/prepare-update.py --release \
-     dist/jedflix-app-1.0.5-arm64-v8a.apk \
-     dist/jedflix-app-1.0.5-armeabi-v7a.apk \
-     dist/jedflix-app-1.0.5-x86_64.apk
+     dist/jedflix-app-1.0.6-arm64-v8a.apk \
+     dist/jedflix-app-1.0.6-armeabi-v7a.apk \
+     dist/jedflix-app-1.0.6-x86_64.apk
    ```
 
    Optionally pass `--notes path/to/plain-text-notes.txt`. The helper verifies
@@ -62,7 +62,7 @@ To prepare a release:
    writing the manifest. Selection follows the Android OS ABI, not CPU marketing:
    64-bit hardware running 32-bit Android needs `armeabi-v7a`.
 
-   Run the helper again with `--release --compat` and the three `dist/jedflix-1.0.5-ABI.apk`
+   Run the helper again with `--release --compat` and the three `dist/jedflix-1.0.6-ABI.apk`
    handoff files to generate `dist/jedflix-update.json`. Both manifests and all
    six APKs must agree on the release version and signing key.
 
