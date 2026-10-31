@@ -28,6 +28,7 @@ server. Overrides: `JEDFLIX_DEVICE_HOST`, `JEDFLIX_DEVICE_USER`,
 ./scripts/dev.sh --no-build # reinstall the existing APK only
 ./scripts/build.sh x86_64   # build only -> dist/jedflix-android-tv-1.10.4-x86_64.apk
 ./scripts/build.sh arm64    # release build -> dist/jedflix-android-tv-1.10.4-arm64.apk
+./scripts/build.sh arm      # 32-bit Android -> dist/jedflix-android-tv-1.10.4-arm.apk
 ```
 
 For an explicitly requested local AVD, use `JEDFLIX_DEVICE_HOST=local` with
@@ -75,6 +76,7 @@ through `scripts/adb.sh`.
 - `scripts/build.sh` ends with apksigner verification and a 16 KB zipalign check.
 - `dist/jedflix-android-tv-1.10.4-x86_64.apk` should contain `lib/x86_64/`.
 - `dist/jedflix-android-tv-1.10.4-arm64.apk` should contain `lib/arm64-v8a/`.
+- `dist/jedflix-android-tv-1.10.4-arm.apk` should contain `lib/armeabi-v7a/`.
 
 ## Release identity
 

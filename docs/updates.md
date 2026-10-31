@@ -17,8 +17,9 @@ must have these assets:
 
 - `jedflix-app-update.json` for `com.jedflix.stremio`
 - `jedflix-app-VERSION-arm64-v8a.apk` for physical ARM64 TVs
+- `jedflix-app-VERSION-armeabi-v7a.apk` for TVs running 32-bit ARM Android
 - `jedflix-app-VERSION-x86_64.apk` for the shared Windows emulator
-- `jedflix-update.json` plus `jedflix-VERSION-ABI.apk` for both architectures:
+- `jedflix-update.json` plus `jedflix-VERSION-ABI.apk` for all three architectures:
   signed handoff updates of the original `com.stremio.one` fork. Keep these
   compatibility assets in every stable release while original fork installs exist.
 
@@ -33,37 +34,55 @@ the x86_64 upstream build when switching to Jedflix versioning. Upstream Stremio
 To prepare a release:
 
 1. Increment `versionName` and `versionCode` in `assets/update-config.json`.
-2. Build both architectures sequentially (the build staging directory is shared):
+2. Build all three architectures sequentially (the build staging directory is shared):
 
    ```bash
    ./scripts/build.sh x86_64
    python3 scripts/spike-build.py --lock-addons --compat
    ./scripts/build.sh arm64
    python3 scripts/spike-build.py --lock-addons --compat
+   ./scripts/build.sh arm
+   python3 scripts/spike-build.py --lock-addons --compat
    ```
 
 3. Generate the release files, substituting the configured version:
 
    ```bash
-   python3 scripts/prepare-update.py \
-     dist/jedflix-app-1.0.4-arm64-v8a.apk \
-     dist/jedflix-app-1.0.4-x86_64.apk
+   python3 scripts/prepare-update.py --release \
+     dist/jedflix-app-1.0.5-arm64-v8a.apk \
+     dist/jedflix-app-1.0.5-armeabi-v7a.apk \
+     dist/jedflix-app-1.0.5-x86_64.apk
    ```
 
    Optionally pass `--notes path/to/plain-text-notes.txt`. The helper verifies
    signatures, alignment, package identity, ABI, version consistency and the
    install permission. It writes `dist/jedflix-app-update.json` with exact file sizes
    and SHA-256 hashes. One ABI is allowed for local testing, but production
-   releases should contain both. Unsupported devices receive an explicit error.
+   releases must use `--release`, which rejects a missing architecture before
+   writing the manifest. Selection follows the Android OS ABI, not CPU marketing:
+   64-bit hardware running 32-bit Android needs `armeabi-v7a`.
 
-   Run the helper again with `--compat` and the two `dist/jedflix-1.0.4-ABI.apk`
+   Run the helper again with `--release --compat` and the three `dist/jedflix-1.0.5-ABI.apk`
    handoff files to generate `dist/jedflix-update.json`. Both manifests and all
-   four APKs must agree on the release version and signing key.
+   six APKs must agree on the release version and signing key.
 
 4. Push the source and create a **draft** release tagged with that version.
-   Upload both manifests and all four versioned APKs, then publish the complete release.
+   Upload both manifests and all six versioned APKs, then publish the complete release.
    Pushing source alone does not make an update available. Do not replace assets
    on an existing release: publish a higher version code for corrections.
+
+The legacy bridge's manifest parser can also be checked against the exact release
+metadata. In the legacy `jedflix-tv` checkout, run:
+
+```bash
+JEDFLIX_RELEASE_MANIFEST=/absolute/path/to/jedflix-app-update.json \
+  ./gradlew :app:testDebugUnitTest --tests '*NewJedflixManifestTest'
+```
+
+Its release coverage test selects both ARM variants on API 24. Version 1.0.4
+reproduces the migration screen's "no build for this TV's processor" failure for
+32-bit ARM. Adding the real ARM APK to the next stable release lets the existing
+legacy 0.9.3 bridge retry successfully without another bridge installation.
 
 Always preserve and securely back up `.local/jedflix-local.jks`. This is the key
 used by the installed fork; losing or changing it breaks updates for those

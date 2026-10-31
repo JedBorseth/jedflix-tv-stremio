@@ -6,8 +6,8 @@ cd "$(dirname "$0")/.."
 SERIAL="${JEDFLIX_SERIAL:-emulator-5554}"
 ARCH="${JEDFLIX_ARCH:-x86_64}"
 case "$ARCH" in
-  x86_64|arm64) ;;
-  *) echo "JEDFLIX_ARCH must be x86_64 or arm64" >&2; exit 2 ;;
+  x86_64|arm64|arm) ;;
+  *) echo "JEDFLIX_ARCH must be x86_64, arm64, or arm" >&2; exit 2 ;;
 esac
 APK="dist/jedflix-android-tv-1.10.4-$ARCH.apk"
 PACKAGE="com.jedflix.stremio"

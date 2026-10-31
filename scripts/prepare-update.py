@@ -15,9 +15,10 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE_ABIS = {"armeabi-v7a", "arm64-v8a", "x86_64"}
 
 
-def prepare(apks, output, notes, compat=False):
+def prepare(apks, output, notes, compat=False, release=False):
     config = json.loads((ROOT / "assets/update-config.json").read_text())
     expected_package = "com.stremio.one" if compat else config["packageName"]
     prefix = "jedflix" if compat else config["artifactPrefix"]
@@ -53,7 +54,7 @@ def prepare(apks, output, notes, compat=False):
         identity = current
         with zipfile.ZipFile(apk) as archive:
             abis = {p.split('/')[1] for p in archive.namelist() if p.startswith('lib/') and p.endswith('.so')}
-        if len(abis) != 1 or not abis <= {"arm64-v8a", "x86_64"}:
+        if len(abis) != 1 or not abis <= RELEASE_ABIS:
             raise ValueError(f"Expected one supported ABI: {apk}: {abis}")
         abi = abis.pop()
         if abi in artifacts:
@@ -68,6 +69,8 @@ def prepare(apks, output, notes, compat=False):
             shutil.copyfile(apk, destination)
         manifest = {"schemaVersion": 1, "packageName": name, "versionCode": int(code),
                     "versionName": version, "minSdk": minimum, "notes": notes, "artifacts": artifacts}
+    if release and set(artifacts) != RELEASE_ABIS:
+        raise ValueError(f"Release is missing required device builds: {', '.join(sorted(RELEASE_ABIS - set(artifacts)))}")
     destination = output / manifest_name
     destination.write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Prepared {destination} for {config['repository']} stable release v{identity[2]} ({', '.join(artifacts)})")
@@ -80,5 +83,6 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, default=ROOT / 'dist')
     parser.add_argument('--notes', type=Path, help='Plain-text release notes file')
     parser.add_argument('--compat', action='store_true', help='Prepare the original package handoff manifest for existing updaters')
+    parser.add_argument('--release', action='store_true', help='Require every supported device architecture before writing a release manifest')
     args = parser.parse_args()
-    prepare(args.apks, args.output, args.notes.read_text() if args.notes else '', args.compat)
+    prepare(args.apks, args.output, args.notes.read_text() if args.notes else '', args.compat, args.release)

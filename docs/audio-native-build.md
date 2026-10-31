@@ -11,9 +11,10 @@ This does not start an FFmpeg executable or transcode video.
 ```sh
 python3 scripts/build-audio-filters.py --abi x86_64
 python3 scripts/build-audio-filters.py --abi arm64-v8a
+python3 scripts/build-audio-filters.py --abi armeabi-v7a
 ```
 
-`arm64` is an alias for `arm64-v8a`. Outputs per ABI:
+`arm64` aliases `arm64-v8a`; `arm` aliases `armeabi-v7a`. Outputs per ABI:
 
 * `.local/audio-filters/<abi>/libavfilter.so`: stripped replacement for packaging.
 * `.local/audio-filters/<abi>/manifest.json`: source/toolchain/upstream/output
@@ -63,7 +64,7 @@ are under `.local/audio-filters/`.
   Published official SHA-1 also checked during initial bootstrap:
   `60e8efb121aa7ce9857afbffa17b2da4c37b515a`.
 * Upstream APK URL and SHA-256 for each ABI are pinned in the recipe and
-  reproduced in its manifest. Both original architectures report `FFmpeg
+  reproduced in its manifest. All three original architectures report `FFmpeg
   version n8.1` for avfilter, avutil, and swresample.
 
 The replacement reports GPL-3.0-or-later. FFmpeg's license text is at

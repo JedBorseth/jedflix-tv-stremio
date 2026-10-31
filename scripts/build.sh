@@ -22,9 +22,10 @@ if [[ "${JEDFLIX_BUILD_LOCK_HELD:-0}" != 1 ]]; then
 fi
 ARCH="${1:-${ARCH:-arm64}}"
 case "$ARCH" in
+  arm|armeabi-v7a) LABEL=arm; ABI=armeabi-v7a; BUILD_ID=31048580; SHA=e18a5405bb53e12a903ff477457318b8f8d3c8e1995e0a4c3ff5d8893d1ccf0b ;;
   arm64|arm64-v8a) LABEL=arm64; ABI=arm64-v8a; BUILD_ID=33145732; SHA=caaf4faba423a47c3174eda08b94057956ce32af616c6377b3485f4f5dec993c ;;
   x86_64|x86-64) LABEL=x86_64; ABI=x86_64; BUILD_ID=34194308; SHA=3a9f86646ba18f4f11073dfbb01e10b1d4019e78d89ba58ec3de79f36f6cfc8c ;;
-  *) echo "usage: $0 [arm64|x86_64]" >&2; exit 2 ;;
+  *) echo "usage: $0 [arm|arm64|x86_64]" >&2; exit 2 ;;
 esac
 UPSTREAM=".local/upstream/stremio-android-tv-1.10.4-$LABEL.apk"
 fetch() { if [[ ! -f "$2" ]]; then curl -fL "$1" -o "$2"; fi; }

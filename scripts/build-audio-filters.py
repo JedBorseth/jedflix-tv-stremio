@@ -29,6 +29,7 @@ NDK_SHA = "a7a2513d4c229f814e1a3bc528fe04ed0807b63f57a6d21f09d75e8362e44a20"
 NDK_REVISION = "28.2.13676358"
 FILTERS = ["acompressor", "alimiter", "volume", "aformat", "aresample", "pan", "anull"]
 ABIS = {
+    "armeabi-v7a": ("arm", "arm-linux-androideabi", "31048580", "e18a5405bb53e12a903ff477457318b8f8d3c8e1995e0a4c3ff5d8893d1ccf0b"),
     "x86_64": ("x86_64", "x86_64-linux-android", "34194308", "3a9f86646ba18f4f11073dfbb01e10b1d4019e78d89ba58ec3de79f36f6cfc8c"),
     "arm64-v8a": ("arm64", "aarch64-linux-android", "33145732", "caaf4faba423a47c3174eda08b94057956ce32af616c6377b3485f4f5dec993c"),
 }
@@ -175,8 +176,9 @@ def validate(abi: str, library: Path, deps: Path, tc: Path) -> dict:
     if not alignments or any(x < 16384 for x in alignments):
         raise RuntimeError(f"ELF segments are not 16 KB aligned: {alignments}")
     header = output([readelf, "-h", library])
-    machine = "Advanced Micro Devices X86-64" if abi == "x86_64" else "AArch64"
-    if machine not in header:
+    machine = {"x86_64": "Advanced Micro Devices X86-64", "arm64-v8a": "AArch64", "armeabi-v7a": "ARM"}[abi]
+    elf_class = "ELF32" if abi == "armeabi-v7a" else "ELF64"
+    if not re.search(r"Machine:\s*" + re.escape(machine) + r"\s*$", header, re.M) or elf_class not in header:
         raise RuntimeError(f"Unexpected ELF machine for {abi}")
     return {"original_exports_retained": len(old_exports), "resolved_imports": len(imports),
             "needed": needed, "load_alignments": alignments, "symbol_version": "LIBAVFILTER_11",
@@ -184,10 +186,11 @@ def validate(abi: str, library: Path, deps: Path, tc: Path) -> dict:
 
 
 def configure_args(abi: str, tc: Path, source: Path) -> list[str]:
-    target = ABIS[abi][1]
+    target = compiler_target(abi)
     b = tc / "bin"
     return [str(source / "configure"), "--target-os=android", "--enable-cross-compile",
-            "--arch=" + ("x86_64" if abi == "x86_64" else "aarch64"), "--cpu=generic",
+            "--arch=" + {"x86_64": "x86_64", "arm64-v8a": "aarch64", "armeabi-v7a": "arm"}[abi],
+            "--cpu=" + ("armv7-a" if abi == "armeabi-v7a" else "generic"),
             f"--cc={b}/{target}23-clang", f"--cxx={b}/{target}23-clang++",
             f"--ar={b}/llvm-ar", f"--nm={b}/llvm-nm", f"--ranlib={b}/llvm-ranlib", f"--strip={b}/llvm-strip",
             "--disable-autodetect", "--disable-everything", "--disable-programs", "--disable-doc",
@@ -197,9 +200,14 @@ def configure_args(abi: str, tc: Path, source: Path) -> list[str]:
             "--enable-filter=" + ",".join(FILTERS)]
 
 
+def compiler_target(abi: str) -> str:
+    # NDK names the ARM compiler armv7a but the matching sysroot arm.
+    return "armv7a-linux-androideabi" if abi == "armeabi-v7a" else ABIS[abi][1]
+
+
 def compile_probe(abi: str, tc: Path, source: Path, build: Path, dest: Path) -> None:
     # Link directly to the existing APK's dependencies, never the temporary builds.
-    run([tc / f"bin/{ABIS[abi][1]}23-clang", "-O2", "-std=c11", "-D_DEFAULT_SOURCE",
+    run([tc / f"bin/{compiler_target(abi)}23-clang", "-O2", "-std=c11", "-D_DEFAULT_SOURCE",
          "-Wno-deprecated-declarations", "-I" + str(source), "-I" + str(build),
          ROOT / "scripts/native/audio-filter-probe.c", "-L" + str(dest), "-L" + str(dest / "original"),
          "-lavfilter", "-lavutil", "-lswresample", "-lm", "-Wl,-z,max-page-size=16384",
@@ -247,10 +255,10 @@ def build_audio(abi: str, force: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--abi", choices=["x86_64", "arm64", "arm64-v8a"], required=True)
+    parser.add_argument("--abi", choices=[*ABIS, "arm", "arm64"], required=True)
     parser.add_argument("--force", action="store_true", help="reconfigure/rebuild instead of reusing a checked cached result")
     args = parser.parse_args()
-    abi = "arm64-v8a" if args.abi == "arm64" else args.abi
+    abi = {"arm": "armeabi-v7a", "arm64": "arm64-v8a"}.get(args.abi, args.abi)
     CACHE.mkdir(parents=True, exist_ok=True)
     with (CACHE / f"build-{abi}.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)

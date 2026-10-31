@@ -1,7 +1,7 @@
 # Jedflix for Android TV
 
 Jedflix is a personal fork of the official **Stremio Android TV 1.10.4** app.
-It is built by patching Stremio's released APK for ARM64 TVs and x86_64 emulators,
+It is built by patching Stremio's released APK for 32-bit ARM, ARM64, and x86_64,
 so playback, addons, and library sync stay on Stremio's engine while Jedflix adds
 a black-and-red theme, a fixed Real-Debrid setup, and its own update channel.
 
@@ -25,8 +25,9 @@ Jedflix is not affiliated with Stremio.
   code, exact size, and SHA-256 before Android installs them.
 - **Curated sources.** Cinemeta + Comet only. Addon install/remove controls and
   upstream addon promotions are disabled.
-- **Two architectures.** ARM64 for physical TVs, x86_64 for the development
-  emulator.
+- **TV processor variants.** 32-bit ARM and ARM64 for TVs, plus x86_64 for the
+  development emulator. Selection follows Android's supported ABI list; a TV
+  with a 64-bit CPU can run 32-bit Android and need the ARM build.
 
 ### Audio normalization and dialogue boost
 
@@ -60,6 +61,7 @@ needed.
 ```bash
 ./scripts/build.sh x86_64   # -> dist/jedflix-android-tv-1.10.4-x86_64.apk
 ./scripts/build.sh arm64    # -> dist/jedflix-android-tv-1.10.4-arm64.apk
+./scripts/build.sh arm      # -> dist/jedflix-android-tv-1.10.4-arm.apk
 ```
 
 The build downloads pinned upstream APKs and apktool, verifies their SHA-256
@@ -96,7 +98,7 @@ The updater reads the latest stable release of
 [`JedBorseth/jedflix-tv-stremio`](https://github.com/JedBorseth/jedflix-tv-stremio).
 Jedflix uses `com.jedflix.stremio` and can coexist with stock Stremio.
 A release includes `jedflix-app-update.json` and `jedflix-app-VERSION-ABI.apk` for
-both architectures, plus the original updater manifest and signed handoff APKs
+all three architectures, plus the original updater manifest and signed handoff APKs
 for existing fork installations. See [docs/updates.md](docs/updates.md) for the manifest contract and
 `scripts/prepare-update.py` for generating release files.
 
