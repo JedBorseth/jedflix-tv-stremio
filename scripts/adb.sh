@@ -18,6 +18,12 @@ if [[ ! -x "$ADB" ]]; then
   exit 1
 fi
 
+# Explicit opt-in for a local AVD when the shared Windows device is offline.
+if [[ "$HOST" == local ]]; then
+  unset ADB_SERVER_SOCKET
+  exec "$ADB" "$@"
+fi
+
 tunnel_alive() { nc -z 127.0.0.1 "$PORT" >/dev/null 2>&1; }
 
 start_tunnel() {

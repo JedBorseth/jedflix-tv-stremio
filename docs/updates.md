@@ -149,4 +149,20 @@ The safe rollout is:
    requires an explicit export/import bridge. Android does not share app-private
    storage merely because labels or owners match.
 
-No legacy releases, manifests or user installations are redirected by this work.
+The legacy bridge and its releases are maintained separately in `jedflix-tv`.
+
+### Stock Stremio already installed
+
+Stock Stremio and this fork both use `com.stremio.one`, but their signing keys
+are different. They cannot coexist or replace one another through an update.
+The legacy 0.9.1 bridge checks only the installed package ID and can mistakenly
+open stock Stremio instead of downloading Jedflix. This produces the original
+Stremio QR login screen even though the released Jedflix APK bypasses login.
+
+To recover on that version, uninstall **Stremio** in Android settings, then reopen
+**the legacy Jedflix app** and complete its migration. Uninstalling Stremio removes
+its local app data. Keep `com.jedflix.tv` installed during this process.
+
+The [legacy 0.9.2 bridge](https://github.com/JedBorseth/jedflix-tv/releases/tag/v0.9.2) verifies the installed app's signing certificate and
+version before forwarding. A conflicting install stays on an explanation screen
+with a button to open Stremio's Android settings; removing it returns to migration.

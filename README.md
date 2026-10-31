@@ -85,6 +85,11 @@ remote adb server behaves like a local device:
 The AVD is x86_64, so the ARM64 artifact cannot be installed there. See
 [AGENTS.md](AGENTS.md) for host details and device controls.
 
+When explicitly testing on a local AVD, use
+`JEDFLIX_DEVICE_HOST=local ./scripts/adb.sh devices` to bypass the SSH tunnel.
+Match the APK to that AVD's ABI;
+the local `JedFlix_Stream_Test` AVD is ARM64.
+
 ## Updates and releases
 
 The updater reads the latest stable release of
