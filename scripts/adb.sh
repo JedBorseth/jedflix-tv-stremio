@@ -1,10 +1,26 @@
 #!/usr/bin/env bash
-# Run adb against the shared Windows dev emulator.
+# Run adb against the shared Windows dev emulator, or a LAN device.
 #
 # The emulator (and its adb server) lives on the Windows host. This script keeps
 # an SSH tunnel to that adb server open, then forwards all arguments to the local
 # adb client. Use it anywhere you would normally use `adb`.
+#
+# Set JEDFLIX_ADB_TARGET=host:port to talk to a device that runs its own adb
+# daemon, such as a TV on the LAN. `.local/device.env` is sourced first, so a
+# machine can keep that preference out of the checkout.
 set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Machine-local device preference, e.g. a TV on the LAN. Gitignored.
+_jedflix_target_set="${JEDFLIX_ADB_TARGET+x}"
+_jedflix_target_override="${JEDFLIX_ADB_TARGET-}"
+# shellcheck source=/dev/null
+[[ -f "$ROOT/.local/device.env" ]] && . "$ROOT/.local/device.env"
+# An explicitly empty target selects the shared emulator instead of the TV.
+if [[ "$_jedflix_target_set" == x ]]; then
+  export JEDFLIX_ADB_TARGET="$_jedflix_target_override"
+fi
+unset _jedflix_target_set _jedflix_target_override
 
 HOST="${JEDFLIX_DEVICE_HOST:-10.0.0.223}"
 USER_NAME="${JEDFLIX_DEVICE_USER:-jedborseth}"
@@ -22,6 +38,19 @@ fi
 if [[ "$HOST" == local ]]; then
   unset ADB_SERVER_SOCKET
   exec "$ADB" "$@"
+fi
+
+# A network device with its own adb daemon (a TV on the LAN) needs no tunnel.
+# Set JEDFLIX_ADB_TARGET to host[:port]; it also becomes the default serial.
+if [[ -n "${JEDFLIX_ADB_TARGET:-}" ]]; then
+  unset ADB_SERVER_SOCKET
+  "$ADB" connect "$JEDFLIX_ADB_TARGET" >/dev/null 2>&1 || true
+  for arg in "$@"; do
+    case "$arg" in
+      -s|--serial|-d|-e) exec "$ADB" "$@" ;;
+    esac
+  done
+  exec "$ADB" -s "$JEDFLIX_ADB_TARGET" "$@"
 fi
 
 tunnel_alive() { nc -z 127.0.0.1 "$PORT" >/dev/null 2>&1; }

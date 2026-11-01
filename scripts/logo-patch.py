@@ -1,32 +1,36 @@
 #!/usr/bin/env python3
-"""Hide the compact logo while the navigation drawer shows the wordmark."""
+"""Keep the compact logo at the same size and position when the drawer expands."""
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1]) / "smali_classes6/com/stremio/tv/views/menu/NavigationMenuKt.smali"
 source = path.read_text()
 
-start_marker = "    .line 236\n    sget v1, Lcom/stremio/tv/R$drawable;->ic_stremio_logo:I\n"
-end_marker = "    move-object/from16 v1, v17\n"
-assert source.count(start_marker) == 1, "Upstream navigation logo layout changed"
-start = source.index(start_marker)
-end = source.index(end_marker, start) + len(end_marker)
-block = source[start:end]
-for expected in ('ic_stremio_logo', 'move v3, v11', 'ImageKt;->Image'):
-    assert expected in block, f"Upstream navigation logo layout changed: {expected}"
-
-replacement = (
-    "    if-eqz v7, :logo_draw_icon\n"
+# Upstream draws the compact icon on every state, then overlays the expanded
+# wordmark (ic_stremio_logo_expanded) when the drawer is open. Keep the compact
+# icon alone so both states render identical artwork at the same 35dp size and
+# top-start position. The FadeInOut content is hidden, not removed, so no layout
+# changes are needed.
+expanded_visibility = (
+    "    if-eqz v7, :cond_a\n"
     "\n"
-    "    .line 236\n"
-    "    move v3, v11\n"
-    "    move-object/from16 v1, v10\n"
+    "    .line 240\n"
+    "    sget-object v2, Landroidx/compose/ui/unit/LayoutDirection;->Ltr:Landroidx/compose/ui/unit/LayoutDirection;\n"
     "\n"
-    "    goto :logo_after_icon\n"
+    "    if-ne v8, v2, :cond_a\n"
     "\n"
-    "    :logo_draw_icon\n"
-    + block +
-    "\n    :logo_after_icon\n"
+    "    move/from16 v3, v20\n"
 )
-path.write_text(source[:start] + replacement + source[end:])
-print("The compact logo is hidden while the navigation wordmark is expanded")
+assert source.count(expanded_visibility) == 1, "Upstream navigation logo layout changed"
+assert source.count("sget v1, Lcom/stremio/tv/R$drawable;->ic_stremio_logo:I") == 1, "Upstream navigation logo layout changed"
+assert "const/16 v2, 0x23\n" in source, "Upstream navigation logo size changed"
+
+source = source.replace(
+    expanded_visibility,
+    expanded_visibility.replace(
+        "    move/from16 v3, v20\n",
+        "    const/4 v3, 0x0\n",
+    ),
+)
+path.write_text(source)
+print("The expanded navigation drawer keeps the compact logo")

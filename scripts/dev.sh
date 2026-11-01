@@ -1,10 +1,30 @@
 #!/usr/bin/env bash
-# Build the x86_64 dev APK and deploy it to the shared Windows emulator.
+# Build the dev APK and deploy it to the configured device.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SERIAL="${JEDFLIX_SERIAL:-emulator-5554}"
-ARCH="${JEDFLIX_ARCH:-x86_64}"
+# Machine-local device preference, e.g. a TV on the LAN. Gitignored.
+_jedflix_target_set="${JEDFLIX_ADB_TARGET+x}"
+_jedflix_target_override="${JEDFLIX_ADB_TARGET-}"
+# shellcheck source=/dev/null
+[[ -f .local/device.env ]] && . .local/device.env
+if [[ "$_jedflix_target_set" == x ]]; then
+  export JEDFLIX_ADB_TARGET="$_jedflix_target_override"
+fi
+unset _jedflix_target_set _jedflix_target_override
+
+SERIAL="${JEDFLIX_SERIAL:-${JEDFLIX_ADB_TARGET:-emulator-5554}}"
+# Match the build to the device unless the caller pins an architecture.
+ARCH="${JEDFLIX_ARCH:-}"
+if [[ -z "$ARCH" ]]; then
+  ABILIST="$(./scripts/adb.sh -s "$SERIAL" shell getprop ro.product.cpu.abilist 2>/dev/null | tr -d '\r' || true)"
+  case "${ABILIST%%,*}" in
+    *arm64*) ARCH=arm64 ;;
+    *armeabi*) ARCH=arm ;;
+    *x86_64*) ARCH=x86_64 ;;
+    *) ARCH=x86_64 ;;
+  esac
+fi
 case "$ARCH" in
   x86_64|arm64|arm) ;;
   *) echo "JEDFLIX_ARCH must be x86_64, arm64, or arm" >&2; exit 2 ;;
@@ -19,8 +39,11 @@ usage() {
   cat <<'EOF'
 Usage: scripts/dev.sh [--no-build] [--no-launch]
 
-  --no-build   Reinstall the existing APK for JEDFLIX_ARCH (default x86_64) without rebuilding
+  --no-build   Reinstall the existing APK for the detected architecture without rebuilding
   --no-launch  Install but do not start the app
+
+Environment: JEDFLIX_ADB_TARGET=host:port for a LAN device (or .local/device.env),
+JEDFLIX_SERIAL to pin a serial, JEDFLIX_ARCH to pin x86_64, arm64, or arm.
 EOF
 }
 
@@ -57,7 +80,7 @@ if [[ ! -f "$APK" ]]; then
 fi
 
 ./scripts/adb.sh -s "$SERIAL" devices | tail -n +2 | grep -q . \
-  || { echo "no device on $SERIAL; is the selected emulator running?" >&2; exit 1; }
+  || { echo "no device on $SERIAL; is the selected device running?" >&2; exit 1; }
 
 ./scripts/adb.sh -s "$SERIAL" install -r "$APK"
 

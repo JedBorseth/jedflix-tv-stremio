@@ -25,6 +25,12 @@ Jedflix is not affiliated with Stremio.
   code, exact size, and SHA-256 before Android installs them.
 - **Curated sources.** Cinemeta + Comet only. Addon install/remove controls and
   upstream addon promotions are disabled.
+- **Dynamic Home.** Direct TMDB discovery runs on the TV, with seasonal shelves,
+  daily variety, family and international picks, and recommendations from local
+  viewing and watchlist evidence. It uses the existing hero and poster cards,
+  preserves Continue Watching, and caches selections for fast reopening. See
+  [Home discovery](docs/home-discovery.md). A separate Jed's Picks shelf follows
+  the curated list in the Jedflix web app.
 - **TV processor variants.** 32-bit ARM and ARM64 for TVs, plus x86_64 for the
   development emulator. Selection follows Android's supported ABI list; a TV
   with a 64-bit CPU can run 32-bit Android and need the ARM build.
@@ -48,7 +54,7 @@ source, toolchain, and ABI checks.
 
 | Home | Real-Debrid |
 | --- | --- |
-| ![Jedflix home screen](assets/screenshots/theme-after.jpg) | ![Real-Debrid settings](assets/screenshots/comet-compose-settings.jpg) |
+| ![Jedflix home screen](assets/screenshots/home-discovery.png) | ![Real-Debrid settings](assets/screenshots/comet-compose-settings.jpg) |
 
 ![Jedflix navigation](assets/screenshots/addon-lock-navigation.jpg)
 
@@ -57,6 +63,10 @@ source, toolchain, and ABI checks.
 Requires Java, Python 3.12+, make, curl, and Android SDK Build Tools 36.0.0. The default SDK
 location is `~/Library/Android/sdk`; override `ANDROID_HOME` or `BUILD_TOOLS` if
 needed.
+
+Home discovery requires a TMDB v3 API key in `JEDFLIX_TMDB_API_KEY` or the
+gitignored `.local/tmdb-api-key` file. The build embeds it in the app; keep the
+source credential out of Git.
 
 ```bash
 ./scripts/build.sh x86_64   # -> dist/jedflix-android-tv-1.10.4-x86_64.apk

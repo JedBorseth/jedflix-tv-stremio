@@ -70,6 +70,7 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         (stage / "classes9.dex").unlink()
         run("python3", "scripts/addon-lock-patch.py", stage)
         run("python3", "scripts/comet-settings-patch.py", stage)
+        run("python3", "scripts/discovery-patch.py", stage)
         update_config = json.loads(Path("assets/update-config.json").read_text())
         package = "com.jedflix.presettest" if args.fresh_test else "com.stremio.one" if args.compat else update_config["packageName"]
         run("python3", "scripts/package-patch.py", stage, package)
@@ -115,6 +116,15 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             + "public static final String UPDATE_MANIFEST = " + json.dumps(update_config["manifestName"]) + ";"
             + "public static final String APK_PREFIX = " + json.dumps(update_config["artifactPrefix"]) + ";"
             + "public static final String REPOSITORY = " + json.dumps(update_config["repository"]) + ";}")
+        tmdb_key_file = Path(".local/tmdb-api-key")
+        tmdb_key = os.environ.get("JEDFLIX_TMDB_API_KEY", "").strip()
+        if not tmdb_key and tmdb_key_file.exists():
+            tmdb_key = tmdb_key_file.read_text().strip()
+        if not re.fullmatch(r"[a-fA-F0-9]{32}", tmdb_key):
+            raise SystemExit("Provide the TMDB v3 key through JEDFLIX_TMDB_API_KEY or .local/tmdb-api-key")
+        tmdb_config = helper / "JedflixTmdbConfig.java"
+        tmdb_config.write_text("package com.jedflix.tv; public final class JedflixTmdbConfig {"
+            + "public static final String API_KEY = " + json.dumps(tmdb_key) + ";}")
         android = SDK / "platforms/android-36/android.jar"
         stubs = helper / "stubs"
         stubs.mkdir()
@@ -128,7 +138,12 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             "scripts/android/CometRestartActivity.java", "scripts/android/UpdateClient.java",
             "scripts/android/JedflixUpdates.java",
             "scripts/android/PackageMigrationActivity.java",
-            "scripts/android/AboutSettings.java", "scripts/android/NightAudio.java", generated, build_config)
+            "scripts/android/AboutSettings.java", "scripts/android/NightAudio.java",
+            "scripts/android/DiscoveryRules.java", "scripts/android/TmdbCatalogClient.java",
+            "scripts/android/JedPicksClient.java",
+            "scripts/android/DiscoverySignals.java", "scripts/android/DiscoveryFeed.java",
+            "scripts/android/TmdbCatalogMapper.java", "scripts/android/HomeDiscovery.java",
+            generated, build_config, tmdb_config)
         run(BUILD_TOOLS / "d8", "--lib", android, "--min-api", "26", "--output", dex, *classes.rglob("*.class"), qr_library)
         shutil.copyfile(dex / "classes.dex", stage / "classes10.dex")
     run("java", "-jar", ".local/tools/apktool.jar", "b", stage, "-o", ".local/spike-unsigned.apk")
