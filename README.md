@@ -31,6 +31,13 @@ Jedflix is not affiliated with Stremio.
   preserves Continue Watching, and caches selections for fast reopening. See
   [Home discovery](docs/home-discovery.md). A separate Jed's Picks shelf follows
   the curated list in the Jedflix web app.
+- **Live TV.** Discover becomes a channel guide with The Office (US) 24/7,
+  Sitcoms, Cartoons, Marvel MCU, Rom Com, Action, Documentaries, Sci-Fi, Horror,
+  Christmas Movies, Comedy Movies, and Christopher Nolan and Quentin Tarantino
+  channels. Every client follows the same shuffled, clock-based schedule and
+  joins the current episode midway. Channel tiles use poster artwork. Pause and
+  seek are available, with Go Live to return to the broadcast. See
+  [Live TV](docs/live-tv.md).
 - **TV processor variants.** 32-bit ARM and ARM64 for TVs, plus x86_64 for the
   development emulator. Selection follows Android's supported ABI list; a TV
   with a 64-bit CPU can run 32-bit Android and need the ARM build.

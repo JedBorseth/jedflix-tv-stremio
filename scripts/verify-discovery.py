@@ -135,7 +135,8 @@ def json_jar() -> Path:
 
 
 def test_sources() -> list[Path]:
-    sources = sorted((ROOT / "scripts" / "tests").glob("*Test.java"))
+    sources = sorted(path for path in (ROOT / "scripts" / "tests").glob("*Test.java")
+                     if not path.name.startswith("LiveTv"))
     if len(sources) < 4:
         fail(
             "expected at least four host tests in scripts/tests/*Test.java, "

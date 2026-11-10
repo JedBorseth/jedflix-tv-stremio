@@ -71,6 +71,8 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         run("python3", "scripts/addon-lock-patch.py", stage)
         run("python3", "scripts/comet-settings-patch.py", stage)
         run("python3", "scripts/discovery-patch.py", stage)
+        run("python3", "scripts/live-tv-guide-patch.py", stage)
+        shutil.copyfile("assets/live-tv.json", stage / "assets/live-tv.json")
         update_config = json.loads(Path("assets/update-config.json").read_text())
         package = "com.jedflix.presettest" if args.fresh_test else "com.stremio.one" if args.compat else update_config["packageName"]
         run("python3", "scripts/package-patch.py", stage, package)
@@ -86,6 +88,7 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         for notice in ["ffmpeg-audio-NOTICE.txt", "ffmpeg-audio-COPYING.GPLv3"]:
             shutil.copyfile(Path("assets") / notice, stage / "assets" / notice)
         run("python3", "scripts/audio-patch.py", stage)
+        run("python3", "scripts/live-tv-playback-patch.py", stage)
         update_config = json.loads(Path("assets/update-config.json").read_text())
         version_name = os.environ.get("JEDFLIX_VERSION_NAME", update_config["versionName"])
         version_code = int(os.environ.get("JEDFLIX_VERSION_CODE", update_config["versionCode"]))
@@ -143,6 +146,11 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
             "scripts/android/JedPicksClient.java",
             "scripts/android/DiscoverySignals.java", "scripts/android/DiscoveryFeed.java",
             "scripts/android/TmdbCatalogMapper.java", "scripts/android/HomeDiscovery.java",
+            "scripts/android/LiveTvSchedule.java", "scripts/android/LiveTvStreams.java",
+            "scripts/android/LiveTvStreamRules.java",
+            "scripts/android/LiveTv.java",
+            "scripts/android/LiveTvGuide.java", "scripts/android/LiveTvPlayback.java",
+            "scripts/android/LiveTvControls.java",
             generated, build_config, tmdb_config)
         run(BUILD_TOOLS / "d8", "--lib", android, "--min-api", "26", "--output", dex, *classes.rglob("*.class"), qr_library)
         shutil.copyfile(dex / "classes.dex", stage / "classes10.dex")

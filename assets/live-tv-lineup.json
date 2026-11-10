@@ -1,0 +1,504 @@
+{
+  "version": 1,
+  "revision": "lineup-v4",
+  "epochMs": 1767225600000,
+  "channels": [
+    {
+      "id": "office",
+      "name": "The Office 24/7",
+      "description": "Dunder Mifflin, all day. A shared shuffle of The Office (US).",
+      "type": "series",
+      "imdbId": "tt0386676",
+      "seed": 3846676,
+      "preserveExisting": true,
+      "shows": [
+        {
+          "seriesTitle": "The Office",
+          "imdbId": "tt0386676",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        }
+      ],
+      "thumbnailImdbId": "tt0386676"
+    },
+    {
+      "id": "sitcoms",
+      "name": "Sitcoms",
+      "description": "Friends, Seinfeld, The Office, Brooklyn Nine-Nine, and Arrested Development around the clock.",
+      "type": "series",
+      "seed": 5176035,
+      "shows": [
+        {
+          "seriesTitle": "Friends",
+          "imdbId": "tt0108778",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        {
+          "seriesTitle": "Seinfeld",
+          "imdbId": "tt0098904",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "seriesTitle": "The Office",
+          "imdbId": "tt0386676",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "reuseChannelId": "office"
+        },
+        {
+          "seriesTitle": "Brooklyn Nine-Nine",
+          "imdbId": "tt2467372",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "seriesTitle": "Arrested Development",
+          "imdbId": "tt0367279",
+          "seasons": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "thumbnailImdbId": "tt0108778"
+    },
+    {
+      "id": "christmas-movies",
+      "name": "Christmas Movies",
+      "description": "Holiday classics including Elf, Home Alone, Christmas Vacation, The Santa Clause, Klaus, and It's a Wonderful Life.",
+      "type": "movie",
+      "seed": 12252025,
+      "movies": [
+        {
+          "title": "Elf",
+          "imdbId": "tt0319343"
+        },
+        {
+          "title": "Home Alone",
+          "imdbId": "tt0099785"
+        },
+        {
+          "title": "Home Alone 2: Lost in New York",
+          "imdbId": "tt0104431"
+        },
+        {
+          "title": "National Lampoon's Christmas Vacation",
+          "imdbId": "tt0097958"
+        },
+        {
+          "title": "The Santa Clause",
+          "imdbId": "tt0111070"
+        },
+        {
+          "title": "How the Grinch Stole Christmas",
+          "imdbId": "tt0170016"
+        },
+        {
+          "title": "The Grinch",
+          "imdbId": "tt2709692"
+        },
+        {
+          "title": "The Polar Express",
+          "imdbId": "tt0338348"
+        },
+        {
+          "title": "Klaus",
+          "imdbId": "tt4729430"
+        },
+        {
+          "title": "Arthur Christmas",
+          "imdbId": "tt1430607"
+        },
+        {
+          "title": "A Christmas Story",
+          "imdbId": "tt0085334"
+        },
+        {
+          "title": "It's a Wonderful Life",
+          "imdbId": "tt0038650"
+        },
+        {
+          "title": "Miracle on 34th Street",
+          "imdbId": "tt0039628"
+        },
+        {
+          "title": "The Muppet Christmas Carol",
+          "imdbId": "tt0104940"
+        },
+        {
+          "title": "Scrooged",
+          "imdbId": "tt0096061"
+        }
+      ],
+      "thumbnailImdbId": "tt0319343"
+    },
+    {
+      "id": "comedy-movies",
+      "name": "Comedy Movies",
+      "description": "Standout comedies including Superbad, Groundhog Day, The Big Lebowski, Dumb and Dumber, Anchorman, and Mean Girls.",
+      "type": "movie",
+      "seed": 6033029,
+      "movies": [
+        {
+          "title": "Superbad",
+          "imdbId": "tt0829482"
+        },
+        {
+          "title": "Groundhog Day",
+          "imdbId": "tt0107048"
+        },
+        {
+          "title": "The Big Lebowski",
+          "imdbId": "tt0118715"
+        },
+        {
+          "title": "Dumb and Dumber",
+          "imdbId": "tt0109686"
+        },
+        {
+          "title": "Anchorman: The Legend of Ron Burgundy",
+          "imdbId": "tt0357413"
+        },
+        {
+          "title": "Office Space",
+          "imdbId": "tt0151804"
+        },
+        {
+          "title": "Hot Fuzz",
+          "imdbId": "tt0425112"
+        },
+        {
+          "title": "Shaun of the Dead",
+          "imdbId": "tt0365748"
+        },
+        {
+          "title": "Airplane!",
+          "imdbId": "tt0080339"
+        },
+        {
+          "title": "Bridesmaids",
+          "imdbId": "tt1478338"
+        },
+        {
+          "title": "The Hangover",
+          "imdbId": "tt1119646"
+        },
+        {
+          "title": "21 Jump Street",
+          "imdbId": "tt1232829"
+        },
+        {
+          "title": "School of Rock",
+          "imdbId": "tt0332379"
+        },
+        {
+          "title": "Step Brothers",
+          "imdbId": "tt0838283"
+        },
+        {
+          "title": "Ferris Bueller's Day Off",
+          "imdbId": "tt0091042"
+        },
+        {
+          "title": "The Nice Guys",
+          "imdbId": "tt3799694"
+        },
+        {
+          "title": "Game Night",
+          "imdbId": "tt2704998"
+        },
+        {
+          "title": "Clueless",
+          "imdbId": "tt0112697"
+        },
+        {
+          "title": "Zoolander",
+          "imdbId": "tt0196229"
+        },
+        {
+          "title": "Mean Girls",
+          "imdbId": "tt0377092"
+        }
+      ],
+      "thumbnailImdbId": "tt0829482"
+    },
+    {
+      "id": "cartoons",
+      "name": "Cartoons",
+      "description": "Family cartoons and adult animation: Avatar: The Last Airbender, Gravity Falls, SpongeBob SquarePants, The Simpsons, Futurama, and Bob's Burgers.",
+      "type": "series",
+      "seed": 6427002,
+      "shows": [
+        {
+          "seriesTitle": "Avatar: The Last Airbender",
+          "imdbId": "tt0417299",
+          "seasons": [
+            1,
+            2,
+            3
+          ],
+          "maxEpisodes": 61
+        },
+        {
+          "seriesTitle": "Gravity Falls",
+          "imdbId": "tt1865718",
+          "seasons": [
+            1,
+            2
+          ],
+          "maxEpisodes": 40
+        },
+        {
+          "seriesTitle": "SpongeBob SquarePants",
+          "imdbId": "tt0206512",
+          "seasons": [
+            1,
+            2
+          ],
+          "maxEpisodes": 80,
+          "strictTitleMatch": true
+        },
+        {
+          "seriesTitle": "The Simpsons",
+          "imdbId": "tt0096697",
+          "seasons": [
+            1,
+            2,
+            3
+          ],
+          "maxEpisodes": 60
+        },
+        {
+          "seriesTitle": "Futurama",
+          "imdbId": "tt0149460",
+          "seasons": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "maxEpisodes": 60
+        },
+        {
+          "seriesTitle": "Bob's Burgers",
+          "imdbId": "tt1561755",
+          "seasons": [
+            1,
+            2,
+            3
+          ],
+          "maxEpisodes": 45
+        }
+      ],
+      "thumbnailImdbId": "tt0206512"
+    },
+    {
+      "id": "marvel-mcu",
+      "name": "Marvel MCU",
+      "description": "The Marvel Cinematic Universe in release order, from Iron Man onward.",
+      "type": "movie",
+      "seed": 20080502,
+      "thumbnailImdbId": "tt0371746",
+      "discover": {
+        "kind": "company",
+        "companyId": 420,
+        "releaseFrom": "2008-04-30",
+        "sortBy": "primary_release_date.asc",
+        "minVoteCount": 50,
+        "minRuntimeMinutes": 70,
+        "limit": 40,
+        "withoutGenreIds": [
+          16,
+          99
+        ],
+        "excludeTitles": [
+          "Punisher: War Zone",
+          "Next Avengers: Heroes of Tomorrow"
+        ]
+      }
+    },
+    {
+      "id": "rom-com",
+      "name": "Rom Com",
+      "description": "Meet-cutes, miscommunications, and grand gestures on repeat.",
+      "type": "movie",
+      "seed": 8675309,
+      "thumbnailImdbId": "tt0098635",
+      "discover": {
+        "kind": "genre",
+        "genreIds": [
+          10749,
+          35
+        ],
+        "sortBy": "popularity.desc",
+        "minVoteCount": 500,
+        "minRating": 6.2,
+        "minRuntimeMinutes": 80,
+        "limit": 30
+      }
+    },
+    {
+      "id": "action",
+      "name": "Action",
+      "description": "Chases, heists, and one-liners from the biggest action hits.",
+      "type": "movie",
+      "seed": 19880715,
+      "thumbnailImdbId": "tt0095016",
+      "discover": {
+        "kind": "genre",
+        "genreIds": [
+          28
+        ],
+        "sortBy": "popularity.desc",
+        "minVoteCount": 2000,
+        "minRating": 6.5,
+        "minRuntimeMinutes": 80,
+        "limit": 30
+      }
+    },
+    {
+      "id": "documentaries",
+      "name": "Documentaries",
+      "description": "True stories, nature, music, and history around the clock.",
+      "type": "movie",
+      "seed": 20100101,
+      "thumbnailImdbId": "tt7775622",
+      "discover": {
+        "kind": "genre",
+        "genreIds": [
+          99
+        ],
+        "sortBy": "popularity.desc",
+        "minVoteCount": 300,
+        "minRating": 7.0,
+        "minRuntimeMinutes": 60,
+        "limit": 30
+      }
+    },
+    {
+      "id": "christopher-nolan",
+      "name": "Christopher Nolan",
+      "description": "Every Christopher Nolan film, from Following to Oppenheimer.",
+      "type": "movie",
+      "seed": 19700730,
+      "thumbnailImdbId": "tt1375666",
+      "discover": {
+        "kind": "director",
+        "personId": 525,
+        "minRuntimeMinutes": 60,
+        "limit": 40,
+        "minVoteCount": 100,
+        "excludeTitles": [
+          "Cinema16: British Short Films",
+          "Cinema16: European Short Films"
+        ]
+      }
+    },
+    {
+      "id": "quentin-tarantino",
+      "name": "Quentin Tarantino",
+      "description": "The complete Quentin Tarantino directing run, in release order.",
+      "type": "movie",
+      "seed": 19630327,
+      "thumbnailImdbId": "tt0110912",
+      "discover": {
+        "kind": "director",
+        "personId": 138,
+        "minRuntimeMinutes": 60,
+        "limit": 40,
+        "excludeTitles": [
+          "Grindhouse",
+          "Kill Bill: The Whole Bloody Affair"
+        ]
+      }
+    },
+    {
+      "id": "sci-fi",
+      "name": "Sci-Fi",
+      "description": "Space, time, and machines: popular science fiction films.",
+      "type": "movie",
+      "seed": 19770525,
+      "thumbnailImdbId": "tt0133093",
+      "discover": {
+        "kind": "genre",
+        "genreIds": [
+          878
+        ],
+        "sortBy": "popularity.desc",
+        "minVoteCount": 2000,
+        "minRating": 6.5,
+        "minRuntimeMinutes": 80,
+        "limit": 30
+      }
+    },
+    {
+      "id": "horror",
+      "name": "Horror",
+      "description": "Slashers, hauntings, and creature features after dark.",
+      "type": "movie",
+      "seed": 19601031,
+      "thumbnailImdbId": "tt0081505",
+      "discover": {
+        "kind": "genre",
+        "genreIds": [
+          27
+        ],
+        "sortBy": "popularity.desc",
+        "minVoteCount": 1500,
+        "minRating": 6.2,
+        "minRuntimeMinutes": 80,
+        "limit": 30
+      }
+    }
+  ]
+}
