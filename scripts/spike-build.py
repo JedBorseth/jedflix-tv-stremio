@@ -88,6 +88,7 @@ with tempfile.TemporaryDirectory(prefix="spike-stage-", dir=".local") as tempora
         for notice in ["ffmpeg-audio-NOTICE.txt", "ffmpeg-audio-COPYING.GPLv3"]:
             shutil.copyfile(Path("assets") / notice, stage / "assets" / notice)
         run("python3", "scripts/audio-patch.py", stage)
+        run("python3", "scripts/player-controls-patch.py", stage)
         run("python3", "scripts/live-tv-playback-patch.py", stage)
         update_config = json.loads(Path("assets/update-config.json").read_text())
         version_name = os.environ.get("JEDFLIX_VERSION_NAME", update_config["versionName"])

@@ -18,7 +18,11 @@ Jedflix is not affiliated with Stremio.
   validated with Real-Debrid and stored encrypted on the device. Set resolution,
   size and result limits, cached-only, and stream filters.
 - **Skip Intro.** Stremio's player already surfaces Skip Intro / Skip Outro
-  prompts; the fork keeps it and the rest of the player intact.
+  prompts; the fork keeps them.
+- **Simpler player controls.** The control row keeps Play/Pause, Next, Rewind,
+  Subtitles, Audio, Chapters, and Episodes. Playback speed, scale (crop/zoom),
+  the player engine picker, and stream statistics are hidden. The engine stays
+  selectable in Settings → Playback.
 - **Self updater.** Settings → About shows the Jedflix version and checks this
   repository's latest stable GitHub release. Updates are matched to the CPU
   architecture and verified against the installed signature, package, version
